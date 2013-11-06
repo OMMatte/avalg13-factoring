@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 public class TestPrimeFactoring {
     private PrimeDivider pd = new PrimeDivider();
 
-//    @Test
+    @Test
     public void testPerfectPotenses(){
         testPerfectPotenses(PrimeTable1.TABLE);
 //        testPerfectPotenses(PrimeTable2.TABLE);

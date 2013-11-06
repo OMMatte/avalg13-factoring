@@ -20,7 +20,10 @@ public class PrimeDivider {
     //The number of roots to be tried with perfectPotens. 2 ... Constant.
     public static final int PERFECT_POTENS_MAX_ROOT = 6;
 
-    public static final long TIME_LIMIT              = 10000;
+    public static final long TIME_LIMIT              = 100;
+
+    //If we should try to find potenses after a algorithm has found a prime (not for trialDivision or potens search itself
+    public static final boolean TRY_POTENS_SEARCH_AFTER_ADD = true;
 
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
@@ -71,23 +74,23 @@ public class PrimeDivider {
     public boolean factorize() {
         //If the value is 1 or probably a prime number, then factorization is not needed.
         if (currentValue.equals(ONE) || currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
-            foundPrimes.add(currentValue);
+            addCurrentPrime();
             return true;
         }
 
         //Try to factorize by using trialDivision algorithm.
-        if (trialDivision()) {
-            return true;
-        }
+//        if (trialDivision()) {
+//            return true;
+//        }
 
         if (pollardFactor(currentValue, System.currentTimeMillis() + TIME_LIMIT)) {
             return true;
         }
 
-        //        done = perfectPotens(); //TODO: Might be totally useless, no more hits in Kattis, check the exception below
-        //        if (done) {
-        //            return true;
-        //        }
+        if(perfectPotens()){
+            return true;
+        }
+
         //        QuadraticSieve qs = new QuadraticSieve(currentValue);
         return false;
     }
@@ -157,8 +160,7 @@ public class PrimeDivider {
                 //If the remainder is 0, then prime is a factor of currentValue.
                 if (quotientAndRemainder[REMAINDER].intValue() == 0) {
                     //Update the currentValue to the quotient and add the factor to foundPrimes.
-                    currentValue = quotientAndRemainder[QUOTIENT];
-                    foundPrimes.add(prime);
+                    addPrime(prime);
 
                     //Do not break here since this prime could be multiple factors of currentValue.
                 } else {
@@ -175,7 +177,7 @@ public class PrimeDivider {
             return true;
         } else if (currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
             //The currentValue is probable a prime and should therefore be added to foundPrimes.
-            foundPrimes.add(currentValue);
+            addCurrentPrime();
             return true;
         }
 
@@ -235,9 +237,7 @@ public class PrimeDivider {
                 //determined by amountPerfectPotenses.
 
                 //Add currentValue to the foundPrimes list amountPerfectPotenses times.
-                for (int i = 0; i < amountPerfectPotenses; i++) {
-                    foundPrimes.add(currentValue);
-                }
+                addCurrentPrime();
 
                 //Return true to indicate that the currentValue is fully factorized.
                 return true;
@@ -346,8 +346,8 @@ public class PrimeDivider {
     public boolean pollardFactor(BigInteger value, long timeLimit) {
         if (value.compareTo(ONE) == 0) { return true; }
         if (value.isProbablePrime(IS_PRIME_CERTAINTY)) {
-            foundPrimes.add(value);
-            return true;
+            addPrime(value);
+            return false;
         }
         BigInteger divisor = pollardFindDiviser(value, timeLimit);
         if (divisor.compareTo(ZERO) == 0) {return false;}
@@ -380,9 +380,33 @@ public class PrimeDivider {
     }
 
     /**
+     * Make sure that you don´t set the boolean parameter to true if you have a recursive algorithm like pollard.
+     * @param prime
+     * @param potensSearch
+     */
+    private void addPrime(final BigInteger prime, boolean potensSearch){
+        for(int i = 0; i < amountPerfectPotenses; i++){
+            foundPrimes.add(prime);
+            currentValue = currentValue.divide(prime);
+        }
+        if(potensSearch){ //TODO: Check that this actually works
+            perfectPotens();
+        }
+    }
+
+    private void addPrime(BigInteger prime){
+        addPrime(prime, false);
+    }
+
+    private void addCurrentPrime(){
+        addPrime(currentValue);
+    }
+
+    /**
      * @return The foundPrimes list of found primes.
      */
     public List<BigInteger> getFoundPrimes() {
+
         return foundPrimes;
     }
 }
