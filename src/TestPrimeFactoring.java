@@ -14,9 +14,9 @@ import static org.junit.Assert.assertEquals;
 public class TestPrimeFactoring {
     private PrimeDivider pd = new PrimeDivider();
 
-    @Test
+//    @Test
     public void testPerfectPotenses(){
-//        testPerfectPotenses(PrimeTable1.TABLE);
+        testPerfectPotenses(PrimeTable1.TABLE);
 //        testPerfectPotenses(PrimeTable2.TABLE);
 //        testPerfectPotenses(PrimeTable3.TABLE);
 //        testPerfectPotenses(PrimeTable4.TABLE);
@@ -28,7 +28,7 @@ public class TestPrimeFactoring {
             for(int root = 2; root <= PrimeDivider.PERFECT_POTENS_MAX_ROOT; root++){
                 pd.init(value.pow(root));
                 assert(pd.perfectPotens());
-                HashSet<BigInteger> list = new HashSet<BigInteger>();
+                List<BigInteger> list = new ArrayList<BigInteger>();
                 for(int a = 0; a < root; a++){
                     list.add(value);
                 }
@@ -52,8 +52,8 @@ public class TestPrimeFactoring {
     public void testPollard(){
         BigInteger val = new BigInteger("784365874326589234654325634829563285923");
         pd.init(val);
-        assert(pd.pollardFactor(val, System.currentTimeMillis() + 10000));
-        HashSet<BigInteger> list = new HashSet<BigInteger>();
+        assert(pd.pollardFactor(val, System.currentTimeMillis() + 100000));
+        List<BigInteger> list = new ArrayList<BigInteger>();
         list.add(new BigInteger("270049004600029939628263"));
         list.add(new BigInteger("20393697827"));
         list.add(new BigInteger("1951"));
@@ -62,10 +62,19 @@ public class TestPrimeFactoring {
 
     }
 
-    private void testFoundPrimes(HashSet<BigInteger> shouldBe){
+    private void testFoundPrimes(List<BigInteger> shouldBe){
         assertEquals(pd.getFoundPrimes().size(), shouldBe.size());
+        boolean success;
         for(BigInteger val: pd.getFoundPrimes()){
-            assert(shouldBe.remove(val));
+            success = false;
+            for(int i = 0; i < shouldBe.size(); i++){
+                if(val.compareTo(shouldBe.get(i)) == 0){
+                    shouldBe.remove(i);
+                    success = true;
+                    break;
+                }
+            }
+            assert (success);
         }
     }
 }

@@ -20,9 +20,7 @@ public class PrimeDivider {
     //The number of roots to be tried with perfectPotens. 2 ... Constant.
     public static final int PERFECT_POTENS_MAX_ROOT = 6;
 
-
-
-    public static final long TIME_LIMIT              = 100;
+    public static final long TIME_LIMIT              = 10000;
 
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
