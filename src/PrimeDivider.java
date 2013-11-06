@@ -14,10 +14,6 @@ public class PrimeDivider {
     private BigInteger       currentValue;
     private List<BigInteger> foundPrimes;
 
-    private double factorBaseB;
-    private static final int FACTOR_BASE_CONSTANT_C = 3;
-
-
     private int amountPerfectPotenses;
 
 
@@ -31,7 +27,6 @@ public class PrimeDivider {
     }
 
     public boolean solve() {
-        calculateFactorBaseB();
         if (currentValue.equals(BigInteger.ONE) || currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
             foundPrimes.add(currentValue);
             return true;
@@ -42,23 +37,15 @@ public class PrimeDivider {
             return true;
         }
 
-        done = perfektPotens(); //TODO: Might be totally useless, no more hits in Kattis, check the exception below
+        done = perfectPotens(); //TODO: Might be totally useless, no more hits in Kattis, check the exception below
         if (done) {
             return true;
         }
-
-        calculateFactorBaseB();
+        QuadraticSieve qs = new QuadraticSieve(currentValue);
         return false;
     }
 
-    private void calculateFactorBaseB() {
-        double rootVal = takeRoot(2, new BigDecimal(currentValue), BigDecimal.ZERO).doubleValue(); //TODO: Maybe use takeRoot() with BigInteger instead, decimal preciseness might not be needed
-        double logVal = 2 * Math.log(rootVal);
-        double compositeLogVal = logVal * Math.log(logVal);
-        double expo = 0.5 * Math.sqrt(compositeLogVal);
-        double finalCalcVal = Math.pow(Math.E, expo);
-        factorBaseB = FACTOR_BASE_CONSTANT_C * finalCalcVal;
-    }
+
 
     public List<BigInteger> getFoundPrimes() {
         return foundPrimes;
@@ -99,7 +86,7 @@ public class PrimeDivider {
         currentValue = n;
     }
 
-    boolean perfektPotens() {
+    boolean perfectPotens() {
 
         amountPerfectPotenses = 1;
         boolean beginNextDepth = true;
