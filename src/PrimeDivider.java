@@ -1,6 +1,7 @@
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,8 +9,14 @@ import java.util.List;
  * @author mathiaslindblom
  */
 public class PrimeDivider {
-    public static final int IS_PRIME_CERTAINTY      = 7;
-    public static final int PERFECT_POTENS_MAX_ROOT = 6;
+    private final static BigInteger ZERO = new BigInteger("0");
+    private final static BigInteger ONE  = new BigInteger("1");
+    private final static BigInteger TWO  = new BigInteger("2");
+
+
+    public static final int  IS_PRIME_CERTAINTY      = 7;
+    public static final int  PERFECT_POTENS_MAX_ROOT = 6;
+    public static final long TIME_LIMIT              = 100;
 
     private BigInteger       currentValue;
     private List<BigInteger> foundPrimes;
@@ -27,7 +34,7 @@ public class PrimeDivider {
     }
 
     public boolean solve() {
-        if (currentValue.equals(BigInteger.ONE) || currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
+        if (currentValue.equals(ONE) || currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
             foundPrimes.add(currentValue);
             return true;
         }
@@ -36,16 +43,18 @@ public class PrimeDivider {
         if (done) {
             return true;
         }
-
-        done = perfectPotens(); //TODO: Might be totally useless, no more hits in Kattis, check the exception below
+        done = pollardFactor(currentValue, System.currentTimeMillis() + TIME_LIMIT);
         if (done) {
             return true;
         }
-        QuadraticSieve qs = new QuadraticSieve(currentValue);
+
+        //        done = perfectPotens(); //TODO: Might be totally useless, no more hits in Kattis, check the exception below
+        //        if (done) {
+        //            return true;
+        //        }
+        //        QuadraticSieve qs = new QuadraticSieve(currentValue);
         return false;
     }
-
-
 
     public List<BigInteger> getFoundPrimes() {
         return foundPrimes;
@@ -56,7 +65,7 @@ public class PrimeDivider {
         trialDivision(PrimeTable2.TABLE, currentValue);
         //        trialDivision(PrimeTable3.TABLE, currentValue);
         //        trialDivision(PrimeTable4.TABLE, currentValue);
-        if (currentValue.equals(BigInteger.ONE)) {
+        if (currentValue.equals(ONE)) {
             return true;
         } else if (currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
             foundPrimes.add(currentValue);
@@ -70,7 +79,7 @@ public class PrimeDivider {
         BigInteger[] quotientAndRemainder;
         for (int lp : table) {
             p = BigInteger.valueOf(lp);
-            if (n.bitCount() < 40 && p.multiply(p).compareTo(n) == 1) {
+            if (p.multiply(p).compareTo(n) == 1) {
                 break;
             }
             while (true) {
@@ -92,10 +101,10 @@ public class PrimeDivider {
         boolean beginNextDepth = true;
         while (beginNextDepth) {
             beginNextDepth = false;
-            BigInteger startX = BigInteger.ONE; //TODO: Better start guess
+            BigInteger startX = ONE; //TODO: Better start guess
             for (int root = 2; root <= PERFECT_POTENS_MAX_ROOT; root++) {
                 BigInteger newNumber = takeRoot(root, currentValue, startX);
-                if (newNumber.compareTo(BigInteger.ZERO) != 0) {
+                if (newNumber.compareTo(ZERO) != 0) {
                     amountPerfectPotenses *= root;
                     currentValue = newNumber;
                     beginNextDepth = true;
@@ -123,7 +132,7 @@ public class PrimeDivider {
             x = x.subtract(x.pow(root)
                             .subtract(n)
                             .divide(rootBD.multiply(x.pow(root - 1))));
-            if (prevX != null && prevX.subtract(x).abs() == BigInteger.ZERO) { break; }
+            if (prevX != null && prevX.subtract(x).abs() == ZERO) { break; }
             prevX = x;
         }
 
@@ -137,7 +146,7 @@ public class PrimeDivider {
             sign = testN.compareTo(n);
         }
         if (sign != 0) {
-            return BigInteger.ZERO;
+            return ZERO;
         }
         return x;
     }
@@ -167,5 +176,44 @@ public class PrimeDivider {
         }
 
         return x;
+    }
+
+
+    private final static SecureRandom random = new SecureRandom();
+
+    public boolean pollardFactor(BigInteger value, long timeLimit) {
+        if (value.compareTo(ONE) == 0) { return true; }
+        if (value.isProbablePrime(IS_PRIME_CERTAINTY)) {
+            foundPrimes.add(value);
+            return true;
+        }
+        BigInteger divisor = pollardFindDiviser(value, timeLimit);
+        if (divisor.compareTo(ZERO) == 0) {return false;}
+
+        if (!pollardFactor(divisor, timeLimit)) {return false;}
+        ;
+        return pollardFactor(value.divide(divisor), timeLimit);
+    }
+
+
+    public BigInteger pollardFindDiviser(BigInteger N, long timeLimit) {
+        BigInteger divisor;
+        BigInteger c = new BigInteger(N.bitLength(), random);
+        BigInteger x = new BigInteger(N.bitLength(), random);
+        BigInteger xx = x;
+
+        // check divisibility by 2
+        if (N.mod(TWO).compareTo(ZERO) == 0) { return TWO; }
+
+        do {
+            if (System.currentTimeMillis() > timeLimit) {return ZERO;}
+            x = x.multiply(x).mod(N).add(c).mod(N);
+            xx = xx.multiply(xx).mod(N).add(c).mod(N);
+            xx = xx.multiply(xx).mod(N).add(c).mod(N);
+            divisor = x.subtract(xx).gcd(N);
+        }
+        while ((divisor.compareTo(ONE)) == 0);
+
+        return divisor;
     }
 }
