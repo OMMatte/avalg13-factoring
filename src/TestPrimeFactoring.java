@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
+
 import static org.junit.Assert.assertEquals;
 
 
@@ -52,7 +52,7 @@ public class TestPrimeFactoring {
     public void testPollard(){
         BigInteger val = new BigInteger("784365874326589234654325634829563285923");
         pd.init(val);
-        assert(pd.pollardFactor(val, System.currentTimeMillis() + 100000));
+        assert(pd.pollard(val, System.currentTimeMillis() + 100000));
         List<BigInteger> list = new ArrayList<BigInteger>();
         list.add(new BigInteger("270049004600029939628263"));
         list.add(new BigInteger("20393697827"));
