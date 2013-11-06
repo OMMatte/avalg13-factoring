@@ -28,8 +28,7 @@ public class Main {
 
 
         for (BigInteger n : inputNumbers) {
-            primeDivider.init(n);
-            if (primeDivider.solve()) {
+            if (primeDivider.factorize(n)) {
                 List<BigInteger> primes = primeDivider.getFoundPrimes();
                 for (BigInteger prime : primes) {
                     System.out.println(prime);
