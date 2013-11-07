@@ -1,6 +1,5 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -27,7 +26,7 @@ public class TestPrimeFactoring {
             BigInteger value = BigInteger.valueOf(i);
             for(int root = 2; root <= PrimeDivider.PERFECT_POTENS_MAX_ROOT; root++){
                 pd.init(value.pow(root));
-                assert(pd.perfectPotens());
+                assert(pd.potensFinder());
                 List<BigInteger> list = new ArrayList<BigInteger>();
                 for(int a = 0; a < root; a++){
                     list.add(value);
@@ -52,7 +51,7 @@ public class TestPrimeFactoring {
     public void testPollard(){
         BigInteger val = new BigInteger("784365874326589234654325634829563285923");
         pd.init(val);
-        assert(pd.pollard(val, System.currentTimeMillis() + 100000));
+        assert(pd.pollard(val, System.currentTimeMillis() + 100000, 1));
         List<BigInteger> list = new ArrayList<BigInteger>();
         list.add(new BigInteger("270049004600029939628263"));
         list.add(new BigInteger("20393697827"));

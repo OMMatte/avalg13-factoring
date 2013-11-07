@@ -26,8 +26,9 @@ public class Main {
             inputNumbers.add(new BigInteger(line));
         }
 
+        for (int i = 0; i < inputNumbers.size(); i++){
+        BigInteger n = inputNumbers.get(i);
 
-        for (BigInteger n : inputNumbers) {
             if (primeDivider.factorize(n)) {
                 List<BigInteger> primes = primeDivider.getFoundPrimes();
                 for (BigInteger prime : primes) {
@@ -36,7 +37,9 @@ public class Main {
             } else {
                 System.out.println("fail");
             }
-            System.out.println();
+            if(i != inputNumbers.size()-1){
+                System.out.println();
+            }
         }
     }
 }

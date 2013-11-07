@@ -16,15 +16,15 @@ public class PrimeDivider {
     private final static SecureRandom random = new SecureRandom();
 
     //BigInteger will guess if prime with certainty 1-(1/2^CONSTANT). 7 => 99.2 %
-    public static final int IS_PRIME_CERTAINTY  = 7;
+    public static final int IS_PRIME_CERTAINTY = 7;
 
     //The number of prime tables to be used by trial division algorithm.
     public static final int TRIAL_DIVISION_PRIME_TABLES = 2;
 
-    //The number of roots to be tried with perfectPotens. 2 ... Constant.
+    //The number of roots to be tried with potensFinder. 2 ... Constant.
     public static final int PERFECT_POTENS_MAX_ROOT = 6;
 
-    //If we should try to find potenses after an algorithm has found a prime (not for trialDivision or potens search itself
+    //If we should try to find potenses after a algorithm has found a prime (not for trialDivision or potens search itself
     public static final boolean TRY_POTENS_SEARCH_AFTER_ADD = true;
 
     //The amount of milliseconds the pollard factor algorithm should spend on a single value.
@@ -32,7 +32,7 @@ public class PrimeDivider {
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
     //time a prime factor have been found and added to foundPrimes list.
-    private BigInteger       currentValue;
+    private BigInteger currentValue;
 
     //The list of found primes for the initial currentValue.
     private List<BigInteger> foundPrimes;
@@ -41,7 +41,7 @@ public class PrimeDivider {
     //that the intial currentValue has been split up amountPerfectPotenses times.
     //This variable should be considered when adding primes to foundPrimes.
     //TODO: Take this into account when adding primes everywhere.
-    private int amountPerfectPotenses;
+    private int totalAmountPotenses;
 
     /**
      * Creates the foundPrimes list.
@@ -52,14 +52,14 @@ public class PrimeDivider {
 
     /**
      * Prepares the class to factorize the given value. Clears the primes list and updates
-     * currentValue to the given value. Also resets amountPerfectPotenses.
+     * currentValue to the given value. Also resets totalAmountPotenses.
      *
      * @param value The value to be prepared to later be factorized.
      */
     void init(BigInteger value) {
         currentValue = value;
         foundPrimes.clear();
-        amountPerfectPotenses = 1;
+        totalAmountPotenses = 1;
     }
 
     /**
@@ -90,14 +90,17 @@ public class PrimeDivider {
 //            return true;
 //        }
 
-        if (pollard(currentValue, System.currentTimeMillis() + TIME_LIMIT)) {
+        if (trialDivision()) {
             return true;
         }
 
-        if(perfectPotens()){
+        if (pollard(currentValue, System.currentTimeMillis() + TIME_LIMIT, totalAmountPotenses)) {
             return true;
         }
 
+        if(potensFinder()){
+            return true;
+        }
         //        QuadraticSieve qs = new QuadraticSieve(currentValue);
 
         return false;
@@ -199,21 +202,20 @@ public class PrimeDivider {
     }
 
     /**
-     * The perfect potens algorithm.
+     * The potens finder algorithm.
      *
-     * Factorizes the currentValue by assuming that it is a potens of primes.
-     * Will calculate roots of the currentValue until a prime root is found, which then is a factor.
+     * Tries to factorize the given value into a non-decimal value.
+     * Will calculate roots of the currentValue up to a given constant until no more roots are to be found.
+     * For the value 10000, the root 100 will first be discovered, then the value 10 and then it will find no more.
      *
-     * Perform PERFECT_POTENS_MAX_ROOT number of roots.
+     * Perform PERFECT_POTENS_MAX_ROOT number of root searches.
      *
-     * Updates currentValue and foundPrimes list.
-     * Updates amountPerfectPotenses to indicate how many root splits have been made. This should be taken
-     * into account when finding primes of currentValue that have previously been splitted by perfectPotens.
+     * Updates currentValue and foundPrimes list if primes are found.
      *
-     * @return true if currentValue is fully factorized. Otherwise false.
+     * @return PotensResult containing the new value, times divided and a boolean stating if we found primes.
      */
-    boolean perfectPotens() {
-        //The initial value of rootFound needs to be true in order to step into the loop.
+    PotensResult potensFinder(BigInteger value, int amountPotenses) {
+
         boolean rootFound = true;
 
         //Loop as long as roots are found.
@@ -230,15 +232,15 @@ public class PrimeDivider {
             for (int n = 2; n <= PERFECT_POTENS_MAX_ROOT; n++) {
 
                 //Get the n:th-root of currentValue.
-                BigInteger x = root(n, currentValue, startX);
+                BigInteger x = root(n, value, startX);
 
                 //Check if the root was calculated successfully.
                 boolean isRoot = !x.equals(ZERO);
                 if (isRoot) {
                     //The root x was calculated successfully. Update the variable that holds the number
                     //of factors the root is of currentValue, and set currentValue of to the root.
-                    amountPerfectPotenses *= n;
-                    currentValue = x;
+                    amountPotenses *= n;
+                    value = x;
 
                     //Indicate that a root has been found, to keep trying to split currentValue up into roots.
                     //Break, because currentValue has been changed, and we want to start over with n:th-root checking.
@@ -248,21 +250,46 @@ public class PrimeDivider {
             }
 
             //Check if currentValue is a probable prime.
-            if (currentValue.isProbablePrime(IS_PRIME_CERTAINTY)) {
+            if (value.isProbablePrime(IS_PRIME_CERTAINTY)) {
                 //It is, which means that the initial currentValue has currentValue as factors as
-                //determined by amountPerfectPotenses.
+                //determined by totalAmountPotenses.
 
-                //Add currentValue to the foundPrimes list amountPerfectPotenses times.
-                addPrime();
+                //Add currentValue to the foundPrimes list totalAmountPotenses times.
+                addPrime(value, false, amountPotenses * totalAmountPotenses);
 
                 //Return true to indicate that the currentValue is fully factorized.
-                return true;
+                return new PotensResult(value, amountPotenses, true);
             }
         }
 
-        //No (more) roots have been found. Also, the currentValue did not turn in to a prime.
-        //currentValue could have been splitted and amountPerfectPotenses updated.
-        return false;
+        //No (more) roots have been found. Also, the final value did not turn in to a prime.
+        //currentValue could have been splitted and totalAmountPotenses updated.
+        return new PotensResult(value, amountPotenses, false);
+    }
+
+    /**
+     * This method uses the currentValue and totalAmountPotenses as parameters to potensFinder.
+     * Updates totalAmountPotenses to indicate how many root splits have been made. This should be taken
+     * into account when finding primes of currentValue that have previously been splitted by potensFinder.
+     * @return True if we found primes.
+     */
+    boolean potensFinder(){
+        PotensResult pr = potensFinder(currentValue, totalAmountPotenses);
+        currentValue = pr.value;
+        totalAmountPotenses = pr.amountPotenses;
+        return pr.lastValueIsPrimeAndAdded;
+    }
+
+    private class PotensResult {
+        public BigInteger value;
+        public int        amountPotenses;
+        public boolean    lastValueIsPrimeAndAdded;
+
+        public PotensResult(BigInteger value, int amountPotenses, boolean lastValueIsPrimeAndAdded) {
+            this.value = value;
+            this.amountPotenses = amountPotenses;
+            this.lastValueIsPrimeAndAdded = lastValueIsPrimeAndAdded;
+        }
     }
 
     /**
@@ -286,8 +313,8 @@ public class PrimeDivider {
         while (true) {
             //Perform the new root estimation.
             x = x.subtract(x.pow(n)
-                    .subtract(value)
-                    .divide(N.multiply(x.pow(n - 1))));
+                            .subtract(value)
+                            .divide(N.multiply(x.pow(n - 1))));
 
             //Check if x has converged (i.e. it is not changed since last estimation).
             boolean converged = prevX != null && prevX.subtract(x).abs().equals(BigInteger.ZERO);
@@ -335,44 +362,56 @@ public class PrimeDivider {
 
 
     /**
-     * Same as pollard(currentValue, timeLimit)
+     * Same as pollard(currentValue, timeLimit, totalAmountPotenses)
      */
     public boolean pollard(long timeLimit) {
-        return pollard(currentValue, timeLimit);
+        return pollard(currentValue, timeLimit, totalAmountPotenses);
     }
 
     /**
-     * Factorization of value with pollard algorithm.
+     * Recursive Pollard Rho factoring combined with potensFinder.
+     *
+     * At every successful divide, a potensFinder will be conducted on the 2 new values IF they are not primes.
      *
      * Updates foundFactors and currentValue.
      *
-     * @param value The value to factorize with pollard.
-     * @param timeLimit The exact time that the algorithm need to stop computing.
-     *
-     * @return true if currentValue is fully factorized, false otherwise.
+     * @param value The value currently being factored.
+     * @param timeLimit If System.currentTimeMillis() gets higher than this value, we abort and return false.
+     * @param amountPotenses The amount to add primes duo to prior successful potensFinder operations.
+     * @return True if factoring is fully completed. False otherwise but some factoring could still have occurred.
      */
-    boolean pollard(BigInteger value, long timeLimit) {
+    public boolean pollard(BigInteger value, long timeLimit, int amountPotenses) {
         //Checks if value is fully factorized. If it is, currentValue is updated to currentValue / value.
-        if(preFactorize(value)) {
+        if (value.compareTo(ONE) == 0) { return true; }
+        if (value.isProbablePrime(IS_PRIME_CERTAINTY)) {
+            addPrime(value, false, amountPotenses);
             return true;
+        }
+
+        PotensResult pr = potensFinder(value, amountPotenses);
+        if(pr.lastValueIsPrimeAndAdded){
+            return true;
+        }else{
+            amountPotenses = pr.amountPotenses;
+            value = pr.value;
         }
 
         //Get the divisor.
         BigInteger divisor = pollardFindDiviser(value, timeLimit);
 
         //Check if it is a valid divisor.
-        if(divisor.compareTo(ZERO) == 0) {
+        if (divisor.compareTo(ZERO) == 0) {
             //It is not, so return false.
             return false;
         }
 
         //Recursively perform a pollard of the divisor, if its not a prime then do no more.
-        if(!pollard(divisor, timeLimit)) {
+        if (!pollard(divisor, timeLimit, amountPotenses)) {
             return false;
         }
 
         //Keep dividing and return the result.
-        return pollard(value.divide(divisor), timeLimit);
+        return pollard(value.divide(divisor), timeLimit, amountPotenses);
     }
 
 
@@ -383,7 +422,7 @@ public class PrimeDivider {
      * @param timeLimit The exact time which the function will stop.
      * @return An divisor of value or 0 if failed.
      */
-    BigInteger pollardFindDiviser(BigInteger value, long timeLimit) {
+    public BigInteger pollardFindDiviser(BigInteger value, long timeLimit) {
         BigInteger divisor;
         BigInteger c = new BigInteger(value.bitLength(), random);
         BigInteger x = new BigInteger(value.bitLength(), random);
@@ -407,36 +446,35 @@ public class PrimeDivider {
     /**
      * Adds prime to the foundPrimes list and divides currentValue with the prime value.
      *
-     * Make sure that you don´t set the boolean parameter to true if you have a recursive algorithm like pollard.
-     *
      * @param prime The prime to be added.
      * @param potensSearch true if a potens search shoul be performed afterwards.
+     * @param amountPotenses the amount of times the prime should be added duo to prior found potenses.
      */
-    private void addPrime(final BigInteger prime, boolean potensSearch) {
-        //Need to take the amount of potens splits into account. Add the prime amountPerfectPotenses number of times.
-        for(int i = 0; i < amountPerfectPotenses; i++){
+    private void addPrime(final BigInteger prime, boolean potensSearch, int amountPotenses) {
+        //Need to take the amount of potens splits into account. Add the prime amountPotenses number of times.
+        for (int i = 0; i < amountPotenses; i++) {
             foundPrimes.add(prime);
             currentValue = currentValue.divide(prime);
         }
 
         //If potensSearch set to true, then perform a potens search.
-        //TODO: Check that this actually works
-        if(potensSearch){
-            perfectPotens();
+        //TODO: Check that this would actually works
+        if (potensSearch) {
+            this.potensFinder();
         }
     }
 
     /**
-     * Same as addPrime(prime, false)
+     * Same as addPrime(prime, false, totalAmountPotenses)
      */
-    private void addPrime(BigInteger prime){
-        addPrime(prime, false);
+    private void addPrime(BigInteger prime) {
+        addPrime(prime, false, totalAmountPotenses);
     }
 
     /**
-     * Same as addPrime(currentValue, false)
+     * Same as addPrime(currentPrime, false, totalAmountPotenses)
      */
-    private void addPrime(){
+    private void addPrime() {
         addPrime(currentValue);
     }
 
