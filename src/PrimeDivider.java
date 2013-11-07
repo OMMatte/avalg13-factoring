@@ -43,7 +43,6 @@ public class PrimeDivider {
     //TODO: Take this into account when adding primes everywhere.
     private int amountPerfectPotenses;
 
-
     /**
      * Creates the foundPrimes list.
      */
@@ -334,19 +333,24 @@ public class PrimeDivider {
         return x;
     }
 
+
     /**
-     * Factorization of currentValue with pollard algorithm.
-     *
-     * Updates foundFactors and currentValue.
-     *
-     * @param timeLimit The total milliseconds the algorithm can run.
-     *
-     * @return true if currentValue is fully factorized, false otherwise.
+     * Same as pollard(currentValue, timeLimit)
      */
     public boolean pollard(long timeLimit) {
         return pollard(currentValue, timeLimit);
     }
 
+    /**
+     * Factorization of value with pollard algorithm.
+     *
+     * Updates foundFactors and currentValue.
+     *
+     * @param value The value to factorize with pollard.
+     * @param timeLimit The exact time that the algorithm need to stop computing.
+     *
+     * @return true if currentValue is fully factorized, false otherwise.
+     */
     boolean pollard(BigInteger value, long timeLimit) {
         //Checks if value is fully factorized. If it is, currentValue is updated to currentValue / value.
         if(preFactorize(value)) {
@@ -357,32 +361,43 @@ public class PrimeDivider {
         BigInteger divisor = pollardFindDiviser(value, timeLimit);
 
         //Check if it is a valid divisor.
-        if (divisor.compareTo(ZERO) == 0) {
+        if(divisor.compareTo(ZERO) == 0) {
             //It is not, so return false.
             return false;
         }
 
-        if (!pollard(divisor, timeLimit)) {return false;}
+        //Recursively perform a pollard of the divisor, if its not a prime then do no more.
+        if(!pollard(divisor, timeLimit)) {
+            return false;
+        }
 
+        //Keep dividing and return the result.
         return pollard(value.divide(divisor), timeLimit);
     }
 
 
-    BigInteger pollardFindDiviser(BigInteger N, long timeLimit) {
+    /**
+     * Find a divisor of value to be used by pollard.
+     *
+     * @param value The value to find a divisor of.
+     * @param timeLimit The exact time which the function will stop.
+     * @return An divisor of value or 0 if failed.
+     */
+    BigInteger pollardFindDiviser(BigInteger value, long timeLimit) {
         BigInteger divisor;
-        BigInteger c = new BigInteger(N.bitLength(), random);
-        BigInteger x = new BigInteger(N.bitLength(), random);
+        BigInteger c = new BigInteger(value.bitLength(), random);
+        BigInteger x = new BigInteger(value.bitLength(), random);
         BigInteger xx = x;
 
         // check divisibility by 2
-        if (N.mod(TWO).compareTo(ZERO) == 0) { return TWO; }
+        if (value.mod(TWO).compareTo(ZERO) == 0) { return TWO; }
 
         do {
             if (System.currentTimeMillis() > timeLimit) {return ZERO;}
-            x = x.multiply(x).mod(N).add(c).mod(N);
-            xx = xx.multiply(xx).mod(N).add(c).mod(N);
-            xx = xx.multiply(xx).mod(N).add(c).mod(N);
-            divisor = x.subtract(xx).gcd(N);
+            x = x.multiply(x).mod(value).add(c).mod(value);
+            xx = xx.multiply(xx).mod(value).add(c).mod(value);
+            xx = xx.multiply(xx).mod(value).add(c).mod(value);
+            divisor = x.subtract(xx).gcd(value);
         }
         while ((divisor.compareTo(ONE)) == 0);
 
@@ -397,12 +412,16 @@ public class PrimeDivider {
      * @param prime The prime to be added.
      * @param potensSearch true if a potens search shoul be performed afterwards.
      */
-    private void addPrime(final BigInteger prime, boolean potensSearch){
+    private void addPrime(final BigInteger prime, boolean potensSearch) {
+        //Need to take the amount of potens splits into account. Add the prime amountPerfectPotenses number of times.
         for(int i = 0; i < amountPerfectPotenses; i++){
             foundPrimes.add(prime);
             currentValue = currentValue.divide(prime);
         }
-        if(potensSearch){ //TODO: Check that this actually works
+
+        //If potensSearch set to true, then perform a potens search.
+        //TODO: Check that this actually works
+        if(potensSearch){
             perfectPotens();
         }
     }
