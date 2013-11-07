@@ -37,9 +37,10 @@ public class TestPrimeFactoring {
     }
     @Test
     public void testQS(){
-        QuadraticSieve qs = new QuadraticSieve(BigInteger.valueOf(100));
-        qs.calculateFactorBaseLimitB();
-        qs.calculateFactoreBase();
+        BigInteger testValue = BigInteger.valueOf(100);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.calculateFactorBaseLimitB(testValue);
+        qs.calculateFactoreBase(testValue);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
         assertEquals(baseFactors.size(), 3);
         assertEquals(baseFactors.get(0).intValue(), 3);

@@ -85,14 +85,25 @@ public class PrimeDivider {
             return true;
         }
 
+
+
+
         //Try to factorize by using trialDivision algorithm.
 //        if (trialDivision()) {
 //            return true;
 //        }
 
-        if (trialDivision()) {
-            return true;
+//        if (trialDivision()) {
+//            return true;
+//        }
+
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.calculateFactorBaseLimitB(currentValue);
+        qs.calculateFactoreBase(currentValue);
+        for(int i = 1; i < 100; i++){
+            qs.findSatisfyingS(currentValue, qs.getFactorBasePrimes().get(i));
         }
+
 
         if (pollard(currentValue, System.currentTimeMillis() + TIME_LIMIT, totalAmountPotenses)) {
             return true;
@@ -101,7 +112,6 @@ public class PrimeDivider {
         if(potensFinder()){
             return true;
         }
-        //        QuadraticSieve qs = new QuadraticSieve(currentValue);
 
         return false;
     }
@@ -300,7 +310,7 @@ public class PrimeDivider {
      * @param x The initial guess of the n:th-root of value.
      * @return An estimated n:th-root of value, or 0 if unable to find a root.
      */
-    public BigInteger root(int n, final BigInteger value, BigInteger x) {
+    public static BigInteger root(int n, final BigInteger value, BigInteger x) {
         //prevX will hold the value of the previously estimated root x. Initially null.
         BigInteger prevX = null;
 
