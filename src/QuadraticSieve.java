@@ -7,13 +7,9 @@ import java.util.List;
  * @author mathiaslindblom
  */
 public class QuadraticSieve {
-    private static final int FACTOR_BASE_CONSTANT_C = 3;
+    private static final int FACTOR_BASE_LIMIT_B_CONSTANT_C = 3;
 
     private double factorBaseLimitB;
-
-    public List<Integer> getFactorBasePrimes() {
-        return factorBasePrimes;
-    }
 
     private BigInteger    currentValue;
     private List<Integer> factorBasePrimes;
@@ -23,14 +19,17 @@ public class QuadraticSieve {
         factorBasePrimes = new ArrayList<Integer>();
     }
 
-
+    /**
+     * Step 4
+     */
     public void calculateFactorBaseLimitB() {
-        double rootVal = PrimeDivider.takeRoot(2, new BigDecimal(currentValue), BigDecimal.ZERO).doubleValue(); //TODO: Maybe use takeRoot() with BigInteger instead, decimal preciseness might not be needed
+        //TODO: Maybe use takeRoot() with BigInteger instead, decimal preciseness might not be needed
+        double rootVal = root(currentValue);
         double logVal = 2 * Math.log(rootVal);
         double compositeLogVal = logVal * Math.log(logVal);
         double expo = 0.5 * Math.sqrt(compositeLogVal);
         double finalCalcVal = Math.pow(Math.E, expo);
-        factorBaseLimitB = FACTOR_BASE_CONSTANT_C * finalCalcVal;
+        factorBaseLimitB = FACTOR_BASE_LIMIT_B_CONSTANT_C * finalCalcVal;
     }
 
     /**
@@ -39,9 +38,9 @@ public class QuadraticSieve {
      */
     public void calculateFactoreBase(BigInteger value) {
         for (int testPrime : PrimeTable1.TABLE) {
-            if (testPrime == 2) {
-                continue;
-            }
+//            if (testPrime == 2) {
+//                continue;
+//            }
             if (testPrime > factorBaseLimitB) {
                 break;
             }
@@ -69,5 +68,26 @@ public class QuadraticSieve {
         } else {
             return false;
         }
+
+    }
+
+    public BigInteger Q(double x) {
+        //Using long to floor the value.
+        long rootVal = (long)root(currentValue);
+
+        //TODO: I'm guessing this should be integer and not decimal.
+        BigInteger quad = BigInteger.valueOf((long) ((rootVal + x) * (rootVal + x)));
+
+        BigInteger result = quad.subtract(currentValue);
+
+        return result;
+    }
+
+    public double root(BigInteger value) {
+        return PrimeDivider.takeRoot(2, new BigDecimal(currentValue), BigDecimal.ZERO).doubleValue();
+    }
+
+    public List<Integer> getFactorBasePrimes() {
+        return factorBasePrimes;
     }
 }
