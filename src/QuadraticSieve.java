@@ -9,7 +9,7 @@ import java.util.List;
 public class QuadraticSieve {
     private static final int FACTOR_BASE_CONSTANT_C = 3;
 
-    private double     factorBaseLimitB;
+    private double factorBaseLimitB;
 
     public List<Integer> getFactorBasePrimes() {
         return factorBasePrimes;
@@ -33,18 +33,41 @@ public class QuadraticSieve {
         factorBaseLimitB = FACTOR_BASE_CONSTANT_C * finalCalcVal;
     }
 
-    public void calculateFactoreBase(){
-        for(int testPrime : PrimeTable1.TABLE){
-            if(testPrime == 2){
+    /**
+     * TODO: test Algorithm 1 The Sieve of Eratosthenes
+     * @param value
+     */
+    public void calculateFactoreBase(BigInteger value) {
+        for (int testPrime : PrimeTable1.TABLE) {
+            if (testPrime == 2) {
                 continue;
             }
-            if (testPrime > factorBaseLimitB){
+            if (testPrime > factorBaseLimitB) {
                 break;
             }
-            int residue = currentValue.pow((testPrime-1)/2).mod(BigInteger.valueOf(testPrime)).intValue();
-            if(residue == 1){
+            int residue = value.pow((testPrime - 1) / 2).mod(BigInteger.valueOf(testPrime)).intValue();
+            if (residue == 1) {
                 factorBasePrimes.add(testPrime);
             }
+        }
+    }
+
+    /**
+     * Checking if a given value is smooth with our factorBase.
+     * This means checking if the value is a composite of our primes.
+     * @param value
+     * @return
+     */
+    public boolean isSmooth(int value) {
+        for (int factor : factorBasePrimes) {
+            while (value % factor != 0) {
+                value = value / factor;
+            }
+        }
+        if (value == 1) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
