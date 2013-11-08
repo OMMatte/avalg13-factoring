@@ -86,21 +86,19 @@ public class PrimeDivider {
         }
 
 
-
-
         //Try to factorize by using trialDivision algorithm.
-//        if (trialDivision()) {
-//            return true;
-//        }
+        //        if (trialDivision()) {
+        //            return true;
+        //        }
 
-//        if (trialDivision()) {
-//            return true;
-//        }
+        //        if (trialDivision()) {
+        //            return true;
+        //        }
 
         QuadraticSieve qs = new QuadraticSieve();
         qs.calculateFactorBaseLimitB(currentValue);
         qs.calculateFactoreBase(currentValue);
-        for(int i = 1; i < 100; i++){
+        for (int i = 1; i < 100; i++) {
             qs.findSatisfyingS(currentValue, qs.getFactorBasePrimes().get(i));
         }
 
@@ -109,7 +107,7 @@ public class PrimeDivider {
             return true;
         }
 
-        if(potensFinder()){
+        if (potensFinder()) {
             return true;
         }
 
@@ -124,25 +122,26 @@ public class PrimeDivider {
      */
     private boolean trialDivision() {
         //If the value is 1 or probably a prime number, then factorization is not needed.
-        if(preFactorize()) {
+        if (preFactorize()) {
             return true;
         }
 
         try {
             //Perform a trial division for each prime table.
-            for(int i = 1; i <= TRIAL_DIVISION_PRIME_TABLES; i++) {
+            for (int i = 1; i <= TRIAL_DIVISION_PRIME_TABLES; i++) {
                 //Get the table from the current table class.
                 Class<?> tableClass = Class.forName("PrimeTable" + i);
                 Field f = tableClass.getField("TABLE");
-                int[] table = (int[])f.get(tableClass);
+                int[] table = (int[]) f.get(tableClass);
 
                 //Perform the trialDivision with the current table.
                 //If it returns true, the currentValue has been fully factorized, so return.
-                if(trialDivision(table)) {
+                if (trialDivision(table)) {
                     return true;
                 }
             }
-        } catch(Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
 
@@ -152,15 +151,14 @@ public class PrimeDivider {
 
     /**
      * The trial division algorithm.
-     *
+     * <p/>
      * Tries to divide the currentValue with primes (as found in tables).
      * If no remainder is present after division, the divisor is a factor.
-     *
+     * <p/>
      * If a factor is found, it is added to the foundPrimes and currentValue
      * is updated to the remainding value that is yet to be factorized.
      *
      * @param table The prime table to be used while performing trial division.
-     *
      * @return true if currentValue is properly factorized. Otherwise false.
      */
     public boolean trialDivision(int[] table) {
@@ -213,13 +211,13 @@ public class PrimeDivider {
 
     /**
      * The potens finder algorithm.
-     *
+     * <p/>
      * Tries to factorize the given value into a non-decimal value.
      * Will calculate roots of the currentValue up to a given constant until no more roots are to be found.
      * For the value 10000, the root 100 will first be discovered, then the value 10 and then it will find no more.
-     *
+     * <p/>
      * Perform PERFECT_POTENS_MAX_ROOT number of root searches.
-     *
+     * <p/>
      * Updates currentValue and foundPrimes list if primes are found.
      *
      * @return PotensResult containing the new value, times divided and a boolean stating if we found primes.
@@ -234,15 +232,11 @@ public class PrimeDivider {
             //in order to continue loop.
             rootFound = false;
 
-            //The initial starting guess n:th-root of currentValue.
-            //TODO: Better start guess
-            BigInteger startX = ONE;
-
             //Perform the n:th-roots as defined by PERFECT_POTENS_MAX_ROOT.
             for (int n = 2; n <= PERFECT_POTENS_MAX_ROOT; n++) {
 
                 //Get the n:th-root of currentValue.
-                BigInteger x = root(n, value, startX);
+                BigInteger x = root(n, value, false);
 
                 //Check if the root was calculated successfully.
                 boolean isRoot = !x.equals(ZERO);
@@ -281,9 +275,10 @@ public class PrimeDivider {
      * This method uses the currentValue and totalAmountPotenses as parameters to potensFinder.
      * Updates totalAmountPotenses to indicate how many root splits have been made. This should be taken
      * into account when finding primes of currentValue that have previously been splitted by potensFinder.
+     *
      * @return True if we found primes.
      */
-    boolean potensFinder(){
+    boolean potensFinder() {
         PotensResult pr = potensFinder(currentValue, totalAmountPotenses);
         currentValue = pr.value;
         totalAmountPotenses = pr.amountPotenses;
@@ -305,14 +300,16 @@ public class PrimeDivider {
     /**
      * Performs Newton-Raphson to calculate the n:th-root of a given value.
      *
-     * @param n The n:th-root to be calculated.
+     * @param n     The n:th-root to be calculated.
      * @param value The value to calculate the n:th-root of.
-     * @param x The initial guess of the n:th-root of value.
      * @return An estimated n:th-root of value, or 0 if unable to find a root.
      */
-    public static BigInteger root(int n, final BigInteger value, BigInteger x) {
+    public static BigInteger root(int n, final BigInteger value, boolean alwaysReturnValue) {
         //prevX will hold the value of the previously estimated root x. Initially null.
         BigInteger prevX = null;
+
+        //TODO: Consider better start guess than one
+        BigInteger x = ONE;
 
         //Convert the n variable to a big integer.
         BigInteger N = BigInteger.valueOf(n);
@@ -362,6 +359,13 @@ public class PrimeDivider {
         //Either x is now the real n:th-root of value, or we have failed to compute the root.
         boolean isRoot = sign == 0;
         if (!isRoot) {
+            if (alwaysReturnValue) {
+                if (sign == -1) {
+                    //This means that we ALWAYS return the upper value of the root
+                    x = x.add(ONE);
+                }
+                return x;
+            }
             //We have failed to compute the root, so return 0 to indicate this.
             return ZERO;
         }
@@ -380,13 +384,13 @@ public class PrimeDivider {
 
     /**
      * Recursive Pollard Rho factoring combined with potensFinder.
-     *
+     * <p/>
      * At every successful divide, a potensFinder will be conducted on the 2 new values IF they are not primes.
-     *
+     * <p/>
      * Updates foundFactors and currentValue.
      *
-     * @param value The value currently being factored.
-     * @param timeLimit If System.currentTimeMillis() gets higher than this value, we abort and return false.
+     * @param value          The value currently being factored.
+     * @param timeLimit      If System.currentTimeMillis() gets higher than this value, we abort and return false.
      * @param amountPotenses The amount to add primes duo to prior successful potensFinder operations.
      * @return True if factoring is fully completed. False otherwise but some factoring could still have occurred.
      */
@@ -399,9 +403,9 @@ public class PrimeDivider {
         }
 
         PotensResult pr = potensFinder(value, amountPotenses);
-        if(pr.lastValueIsPrimeAndAdded){
+        if (pr.lastValueIsPrimeAndAdded) {
             return true;
-        }else{
+        } else {
             amountPotenses = pr.amountPotenses;
             value = pr.value;
         }
@@ -428,7 +432,7 @@ public class PrimeDivider {
     /**
      * Find a divisor of value to be used by pollard.
      *
-     * @param value The value to find a divisor of.
+     * @param value     The value to find a divisor of.
      * @param timeLimit The exact time which the function will stop.
      * @return An divisor of value or 0 if failed.
      */
@@ -456,8 +460,8 @@ public class PrimeDivider {
     /**
      * Adds prime to the foundPrimes list and divides currentValue with the prime value.
      *
-     * @param prime The prime to be added.
-     * @param potensSearch true if a potens search shoul be performed afterwards.
+     * @param prime          The prime to be added.
+     * @param potensSearch   true if a potens search shoul be performed afterwards.
      * @param amountPotenses the amount of times the prime should be added duo to prior found potenses.
      */
     private void addPrime(final BigInteger prime, boolean potensSearch, int amountPotenses) {
@@ -490,12 +494,11 @@ public class PrimeDivider {
 
     /**
      * Check if the value is 1 or a probable prime.
-     *
+     * <p/>
      * Updates foundFactors if value is a prime.
      * Updates currentValue to currentValue/value if value is fully factorized.
      *
      * @param prime The value to be checked if it is fully factorized.
-     *
      * @return true if value is fully factorized, false otherwise.
      */
     public boolean preFactorize(BigInteger prime) {
@@ -519,7 +522,7 @@ public class PrimeDivider {
 
     /**
      * Check if the currentValue is 1 or a probable prime.
-     *
+     * <p/>
      * Updates foundFactors if currentValue is a prime.
      * Updates currentValue to 1 if fully factorized.
      *
@@ -537,29 +540,29 @@ public class PrimeDivider {
     }
 
     //TODO: Remove?
-    public static BigDecimal takeRoot(int root, BigDecimal n, BigDecimal maxError) {
-        int MAXITER = 5000;
-
-        // Specify a math context with 40 digits of precision.
-        MathContext mc = new MathContext(40);
-
-        // Specify the starting value in the search for the cube root.
-        BigDecimal x;
-        x = new BigDecimal("1", mc);
-
-
-        BigDecimal prevX = null;
-
-        BigDecimal rootBD = new BigDecimal(root, mc);
-        // Search for the cube root via the Newton-Raphson loop. Output each successive iteration's value.
-        for (int i = 0; i < MAXITER; ++i) {
-            x = x.subtract(x.pow(root, mc)
-                    .subtract(n, mc)
-                    .divide(rootBD.multiply(x.pow(root - 1, mc), mc), mc), mc);
-            if (prevX != null && prevX.subtract(x).abs().compareTo(maxError) < 0) { break; }
-            prevX = x;
-        }
-
-        return x;
-    }
+    //    public static BigDecimal takeRoot(int root, BigDecimal n, BigDecimal maxError) {
+    //        int MAXITER = 5000;
+    //
+    //        // Specify a math context with 40 digits of precision.
+    //        MathContext mc = new MathContext(40);
+    //
+    //        // Specify the starting value in the search for the cube root.
+    //        BigDecimal x;
+    //        x = new BigDecimal("1", mc);
+    //
+    //
+    //        BigDecimal prevX = null;
+    //
+    //        BigDecimal rootBD = new BigDecimal(root, mc);
+    //        // Search for the cube root via the Newton-Raphson loop. Output each successive iteration's value.
+    //        for (int i = 0; i < MAXITER; ++i) {
+    //            x = x.subtract(x.pow(root, mc)
+    //                    .subtract(n, mc)
+    //                    .divide(rootBD.multiply(x.pow(root - 1, mc), mc), mc), mc);
+    //            if (prevX != null && prevX.subtract(x).abs().compareTo(maxError) < 0) { break; }
+    //            prevX = x;
+    //        }
+    //
+    //        return x;
+    //    }
 }

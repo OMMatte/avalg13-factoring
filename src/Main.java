@@ -13,6 +13,9 @@ public class Main {
     public static boolean debug = false;
 
     public static void main(String args[]) throws Exception {
+
+
+
         PrimeDivider primeDivider = new PrimeDivider();
 
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));

@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 public class TestPrimeFactoring {
     private PrimeDivider pd = new PrimeDivider();
 
-    @Test
+//    @Test
     public void testPerfectPotenses(){
         testPerfectPotenses(PrimeTable1.TABLE);
 //        testPerfectPotenses(PrimeTable2.TABLE);
@@ -42,10 +42,28 @@ public class TestPrimeFactoring {
         qs.calculateFactorBaseLimitB(testValue);
         qs.calculateFactoreBase(testValue);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
-        assertEquals(baseFactors.size(), 3);
-        assertEquals(baseFactors.get(0).intValue(), 3);
-        assertEquals(baseFactors.get(1).intValue(), 7);
-        assertEquals(baseFactors.get(2).intValue(), 11);
+        assertEquals(baseFactors.size(), 4);
+        assertEquals(baseFactors.get(0).intValue(), 2);
+        assertEquals(baseFactors.get(1).intValue(), 3);
+        assertEquals(baseFactors.get(2).intValue(), 7);
+        assertEquals(baseFactors.get(3).intValue(), 11);
+    }
+
+    @Test
+    public void testQSMatrices(){
+        QuadraticSieve quadraticSieve = new QuadraticSieve();
+        byte[][] test = {{0,0,0,1},{1,1,1,0},{1,1,1,1}};
+        //        byte[][] test = {{1,1,0,0},{1,1,0,1},{0,1,1,1},{0,0,1,0},{0,0,0,1}};
+        boolean[] marked = new boolean[test.length];
+        quadraticSieve.gaussElimination(test, marked);
+        boolean[] selected = quadraticSieve.findLeftNullSpaceVector(test, marked);
+        ArrayList<Integer> xSmooth = new ArrayList<Integer>();
+        xSmooth.add(0);
+        xSmooth.add(3);
+        xSmooth.add(71);
+
+        long result = quadraticSieve.finalizeGCD(BigInteger.valueOf(15347), selected, xSmooth).longValue();
+        assertEquals(result, 103);
     }
 
     @Test
