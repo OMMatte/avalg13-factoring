@@ -1,7 +1,5 @@
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +97,7 @@ public class PrimeDivider {
         qs.calculateFactorBaseLimitB(currentValue);
         qs.calculateFactoreBase(currentValue);
         for (int i = 1; i < 100; i++) {
-            qs.findSatisfyingS(currentValue, qs.getFactorBasePrimes().get(i));
+            qs.tonelliShanks(currentValue, qs.getFactorBasePrimes().get(i));
         }
 
 

@@ -35,6 +35,15 @@ public class TestPrimeFactoring {
             }
         }
     }
+
+    @Test
+    public void testTS(){
+        QuadraticSieve qs = new QuadraticSieve();
+        int[] xs = qs.tonelliShanks(BigInteger.valueOf(10), 13);
+        assertEquals(xs[0], 7);
+        assertEquals(xs[1], 6);
+    }
+
     @Test
     public void testQS(){
         BigInteger testValue = BigInteger.valueOf(100);
@@ -66,7 +75,7 @@ public class TestPrimeFactoring {
         assertEquals(result, 103);
     }
 
-    @Test
+    //@Test
     public void testPollard(){
         BigInteger val = new BigInteger("784365874326589234654325634829563285923");
         pd.init(val);
@@ -95,4 +104,23 @@ public class TestPrimeFactoring {
             assert (success);
         }
     }
+
+    @Test
+    public void fullTestQS(){
+        BigInteger N = BigInteger.valueOf(1621984134912629L);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.calculateFactorBaseLimitB(N);
+        qs.calculateFactoreBase(N);
+        List<Integer> baseFactors = qs.getFactorBasePrimes();
+//        assert(baseFactors.size() >= 4);
+//        assertEquals(baseFactors.get(0).intValue(), 2);
+//        assertEquals(baseFactors.get(1).intValue(), 17);
+//        assertEquals(baseFactors.get(2).intValue(), 23);
+//        assertEquals(baseFactors.get(3).intValue(), 29);
+
+        ArrayList<Integer> smoothX = qs.sieve(N);
+        assertEquals(smoothX.size(), baseFactors.size()+1);
+
+    }
+
 }
