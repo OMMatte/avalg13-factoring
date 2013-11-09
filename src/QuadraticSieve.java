@@ -6,28 +6,30 @@ import java.util.List;
  * @author mathiaslindblom
  */
 public class QuadraticSieve {
-    static final int   FACTOR_BASE_LIMIT_B_CONSTANT_C = 3;
-    static final int   SIEVE_SPAN                     = 100; //TODO: Use log of biggest element in factor base instead
+    static final int   FACTOR_BASE_LIMIT_B_CONSTANT_C = 10;
+    static final int   SIEVE_SPAN                     = 1000; //TODO: Use log of biggest element in factor base instead
     static final float SMOOTH_ZERO                    = (float) Math.sqrt(47);
-    static final int   SMOOTH_EXTRAS                  = 4;
+    static final int   SMOOTH_EXTRAS                  = 1;
 
     private double factorBaseLimitB;
 
     private List<Integer> factorBasePrimes;
-    int[]   sieveCurrentX;
-    int[]   sievePrimeOffset;
-    float[] sievePrimeLog;
+    int[]      sieveCurrentX;
+    int[]      sievePrimeOffset;
+    float[]    sievePrimeLog;
+    BigInteger rootValForN;
 
-    public QuadraticSieve() {
+    public QuadraticSieve(BigInteger N) {
         factorBasePrimes = new ArrayList<Integer>();
+        rootValForN = PrimeDivider.root(2, N, true);
     }
 
     /**
      * Step 4
      */
-    public void calculateFactorBaseLimitB(BigInteger value) {
-        double rootVal = PrimeDivider.root(2, value, true).doubleValue(); //TODO: Maybe use takeRoot() with BigInteger instead, decimal preciseness might not be needed
-        double logVal = 2 * Math.log(rootVal);
+    public void calculateFactorBaseLimitB(BigInteger N) {
+
+        double logVal = (2 * Math.log(rootValForN.longValue()));
         double compositeLogVal = logVal * Math.log(logVal);
         double expo = 0.5 * Math.sqrt(compositeLogVal);
         double finalCalcVal = Math.pow(Math.E, expo);
@@ -110,7 +112,7 @@ public class QuadraticSieve {
     public BigInteger Q(BigInteger x, BigInteger N) {
         //Using long to floor the value.
         //TODO OPTIMIZE THIS MOTHERFUCKER
-        BigInteger rootVal = root(N);
+        BigInteger rootVal = rootValForN;
 
         //TODO: I'm guessing this should be integer and not decimal.
         BigInteger quad = ((rootVal.add(x)).multiply(rootVal.add(x)));
@@ -123,9 +125,9 @@ public class QuadraticSieve {
         return result;
     }
 
-    public BigInteger root(BigInteger value) {
-        return PrimeDivider.root(2, value, true);
-    }
+    //    public BigInteger root(BigInteger value) {
+    //        return PrimeDivider.root(2, value, true);
+    //    }
 
     public List<Integer> getFactorBasePrimes() {
         return factorBasePrimes;
@@ -160,9 +162,9 @@ public class QuadraticSieve {
             S++;
             Q = Q / 2;
         }
-        int R;
+        BigInteger R;
         if (S == 1) {
-            R = N.modPow(BigInteger.valueOf((prime + 1) / 4), BigInteger.valueOf(prime)).intValue();
+            R = N.modPow(BigInteger.valueOf((prime + 1) / 4), BigInteger.valueOf(prime));
         } else {
 
             int residue = 0;
@@ -174,20 +176,24 @@ public class QuadraticSieve {
                 }
             }
 
-            int C = BigInteger.valueOf(Z).modPow(BigInteger.valueOf(Q), BigInteger.valueOf(prime)).intValue();
+            BigInteger C = BigInteger.valueOf(Z).modPow(BigInteger.valueOf(Q), BigInteger.valueOf(prime));
 
-            R = N.modPow(BigInteger.valueOf((Q + 1) / 2), BigInteger.valueOf(prime)).intValue();
+            R = N.modPow(BigInteger.valueOf((Q + 1) / 2), BigInteger.valueOf(prime));
 
-            int t = N.modPow(BigInteger.valueOf(Q), BigInteger.valueOf(prime)).intValue();
+            BigInteger t = N.modPow(BigInteger.valueOf(Q), BigInteger.valueOf(prime));
 
             int M = S;
 
-            while (t != 1) {
+            while (!t.equals(BigInteger.ONE)) {
                 int tempVal = 1;
                 int i = 1;
                 while (i < M) {
-                    tempVal *= 2;
-                    if (BigInteger.valueOf(t).modPow(BigInteger.valueOf(tempVal), BigInteger.valueOf(prime)).intValue() == 1) {
+                    tempVal *= 2; //TODO: Check so it does not go to high
+                    if (tempVal > Math.pow(2, 20)) {
+                        System.out.println(i + " " + tempVal);
+                        throw new RuntimeException();
+                    }
+                    if (t.modPow(BigInteger.valueOf(tempVal), BigInteger.valueOf(prime)).equals(BigInteger.ONE)) {
                         break;
                     }
                     i++;
@@ -195,19 +201,22 @@ public class QuadraticSieve {
                 if (i == M && i != 1) {
                     i--;
                 }
+                if (M - i > 25) {
+                    throw new RuntimeException();
+                }
 
 
-                int b = BigInteger.valueOf(C).modPow(BigInteger.valueOf((long) Math.pow(2, M - i - 1)), BigInteger.valueOf(prime)).intValue();
-                R = (R * b) % prime;
-                t = (t * b * b) % prime;
-                C = (b * b) % prime;
+                BigInteger b = C.modPow(BigInteger.valueOf((long) Math.pow(2, M - i - 1)), BigInteger.valueOf(prime));
+                R = R.multiply(b).mod(BigInteger.valueOf(prime));
+                t = t.multiply(b).multiply(b).mod(BigInteger.valueOf(prime));
+                C = b.multiply(b).mod(BigInteger.valueOf(prime));
                 M = i;
             }
         }
 
-        int[] result = new int[]{ R, prime - R };
+        int[] result = new int[]{ R.intValue(), prime - R.intValue() };
         for (int i = 0; i < result.length; i++) {
-            result[i] = (int) ((((long) result[i]) - root(N).longValue()) % prime);
+            result[i] = (int) ((((long) result[i]) - rootValForN.longValue()) % prime);
             if (result[i] < 0) {
                 result[i] += prime;
             }
@@ -352,18 +361,37 @@ public class QuadraticSieve {
         }
 
         for (int val = 1; val < Math.pow(2, unmarkedList.size()); val++) {
+            boolean[] oneSetRows = new boolean[matrix.length];
             boolean[] selectedRows = new boolean[matrix.length];
-            for (int unmarked = 1; unmarked <= unmarkedList.size() && ((unmarked & val) == unmarked); unmarked++) {
-                for (int col = 0; col < matrix[0].length; col++) {
-                    if (matrix[unmarkedList.get(unmarked - 1)][col] == 1) {
-                        for (int row = 0; row < matrix.length; row++) {
-                            if (matrix[row][col] == 1) {
-                                selectedRows[row] = true;
-                            }
+            for (int unmarked = 1; unmarked <= unmarkedList.size(); unmarked++) {
+                if ((unmarked & val) == unmarked) {
+                    oneSetRows[unmarkedList.get(unmarked - 1)] = true;
+                    selectedRows[unmarkedList.get(unmarked - 1)] = true;
+                }
+            }
+            for (int col = 0; col < matrix[0].length; col++) {
+                int colValue = 0;
+                int dependentRow = -1;
+                for (int row = 0; row < matrix.length; row++) {
+                    if (matrix[row][col] == 1) {
+                        if (oneSetRows[row]) {
+                            //Increase the value
+                            colValue = (colValue + 1) % 2;
+                        } else if (markedPos[row]) {
+                            //We have the row that is dependent and should only appear once in the matrix
+                            dependentRow = row;
                         }
                     }
                 }
+                if (dependentRow != -1) {
+                    if (colValue == 1) {
+                        selectedRows[dependentRow] = true;
+                    }
+                } else if (colValue != 0) {
+                    throw new RuntimeException("We found no dependent value but we have a total column value other than 0");
+                }
             }
+
 
             BigInteger result = finalizeGCD(N, selectedRows, smoothX);
             if (!result.equals(N) && !result.equals(BigInteger.ONE)) {
@@ -378,7 +406,7 @@ public class QuadraticSieve {
     BigInteger finalizeGCD(BigInteger N, boolean[] selectedRows, ArrayList<Integer> smoothX) {
         BigInteger qValue = BigInteger.ONE;
         BigInteger xValue = BigInteger.ONE;
-        BigInteger rootN = root(N);
+        BigInteger rootN = rootValForN;
         for (int row = 0; row < selectedRows.length; row++) {
             if (selectedRows[row]) {
 

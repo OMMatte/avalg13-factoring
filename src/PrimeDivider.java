@@ -93,7 +93,7 @@ public class PrimeDivider {
         //            return true;
         //        }
 
-        QuadraticSieve qs = new QuadraticSieve();
+        QuadraticSieve qs = new QuadraticSieve(currentValue);
         qs.calculateFactorBaseLimitB(currentValue);
         qs.calculateFactoreBase(currentValue);
         for (int i = 1; i < 100; i++) {

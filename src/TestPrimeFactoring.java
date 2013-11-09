@@ -1,5 +1,7 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -38,25 +40,27 @@ public class TestPrimeFactoring {
 
     @Test
     public void testLegendre(){
-        QuadraticSieve qs = new QuadraticSieve();
-        int residue = qs.legendre(BigInteger.valueOf(6), 11);
+        BigInteger N = BigInteger.valueOf(6);
+        QuadraticSieve qs = new QuadraticSieve(N);
+        int residue = qs.legendre(N, 11);
         assertEquals(residue, -1);
     }
 
     @Test
     public void testTS(){
-        QuadraticSieve qs = new QuadraticSieve();
-        int[] xs = qs.tonelliShanks(BigInteger.valueOf(10), 13);
+        BigInteger N = BigInteger.valueOf(10);
+        QuadraticSieve qs = new QuadraticSieve(N);
+        int[] xs = qs.tonelliShanks(N, 13);
         assertEquals(xs[1], 2);
         assertEquals(xs[0], 3);
     }
 
 //    @Test
     public void testQS(){
-        BigInteger testValue = BigInteger.valueOf(100);
-        QuadraticSieve qs = new QuadraticSieve();
-        qs.calculateFactorBaseLimitB(testValue);
-        qs.calculateFactoreBase(testValue);
+        BigInteger N = BigInteger.valueOf(100);
+        QuadraticSieve qs = new QuadraticSieve(N);
+        qs.calculateFactorBaseLimitB(N);
+        qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
         assertEquals(baseFactors.size(), 4);
         assertEquals(baseFactors.get(0).intValue(), 2);
@@ -114,13 +118,15 @@ public class TestPrimeFactoring {
 
     @Test
     public void fullTestQS(){
-        BigInteger N = BigInteger.valueOf(15347);
-//        BigInteger N = BigInteger.valueOf(1621984134912629L);
+//        BigInteger N = BigInteger.valueOf(15347);
+        BigInteger N = BigInteger.valueOf(1621984134912629L);
+//        BigInteger N = new BigInteger("712470926339797736608284055933");
+//        BigInteger N = BigInteger.valueOf(5838554709437459L);
 //        BigInteger N = BigInteger.valueOf(62615533L);
 //        BigInteger N = BigInteger.valueOf(9797);
 //        BigInteger N = BigInteger.valueOf(911121L);
 
-        QuadraticSieve qs = new QuadraticSieve();
+        QuadraticSieve qs = new QuadraticSieve(N);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -133,8 +139,15 @@ public class TestPrimeFactoring {
         ArrayList<Integer> smoothX = qs.sieve(N);
 //        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
+        Collections.sort(smoothX);
+//        for(int i = 1; i < smoothX.size(); i++){
+//            if(smoothX.get(i-1).equals(smoothX.get(i))){
+//                Collections.sort(smoothX);
+//            }
+//        }
         byte[][] matrix = qs.buildMatrix(smoothX,N);
         boolean[] marked = new boolean[matrix.length];
+        int[] counterMatrix = new int[marked.length];
 
         qs.gaussElimination(matrix, marked);
         BigInteger result = qs.finalize(matrix, marked, N, smoothX);
@@ -142,9 +155,15 @@ public class TestPrimeFactoring {
             for(int row = 0; row < matrix.length; row++){
                 if(matrix[row][col] == 1){
                     System.out.print(row + " ");
+                    counterMatrix[row]++;
                 }
             }
             System.out.println();
+        }
+        for(int row = 0; row < counterMatrix.length; row++){
+            if(counterMatrix[row] > 1 && marked[row]){
+                throw new RuntimeException();
+            }
         }
         System.out.println();
     }
