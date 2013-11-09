@@ -37,14 +37,21 @@ public class TestPrimeFactoring {
     }
 
     @Test
-    public void testTS(){
+    public void testLegendre(){
         QuadraticSieve qs = new QuadraticSieve();
-        int[] xs = qs.tonelliShanks(BigInteger.valueOf(10), 13);
-        assertEquals(xs[0], 2);
-        assertEquals(xs[1], 3);
+        int residue = qs.legendre(BigInteger.valueOf(6), 11);
+        assertEquals(residue, -1);
     }
 
     @Test
+    public void testTS(){
+        QuadraticSieve qs = new QuadraticSieve();
+        int[] xs = qs.tonelliShanks(BigInteger.valueOf(10), 13);
+        assertEquals(xs[1], 2);
+        assertEquals(xs[0], 3);
+    }
+
+//    @Test
     public void testQS(){
         BigInteger testValue = BigInteger.valueOf(100);
         QuadraticSieve qs = new QuadraticSieve();
@@ -58,22 +65,22 @@ public class TestPrimeFactoring {
         assertEquals(baseFactors.get(3).intValue(), 11);
     }
 
-    @Test
-    public void testQSMatrices(){
-        QuadraticSieve quadraticSieve = new QuadraticSieve();
-        byte[][] test = {{0,0,0,1},{1,1,1,0},{1,1,1,1}};
-        //        byte[][] test = {{1,1,0,0},{1,1,0,1},{0,1,1,1},{0,0,1,0},{0,0,0,1}};
-        boolean[] marked = new boolean[test.length];
-        quadraticSieve.gaussElimination(test, marked);
-        boolean[] selected = quadraticSieve.findLeftNullSpaceVector(test, marked);
-        ArrayList<Integer> xSmooth = new ArrayList<Integer>();
-        xSmooth.add(0);
-        xSmooth.add(3);
-        xSmooth.add(71);
-
-        long result = quadraticSieve.finalizeGCD(BigInteger.valueOf(15347), selected, xSmooth).longValue();
-        assertEquals(result, 103);
-    }
+//    @Test
+//    public void testQSMatrices(){
+//        QuadraticSieve quadraticSieve = new QuadraticSieve();
+//        byte[][] test = {{0,0,0,1},{1,1,1,0},{1,1,1,1}};
+//        //        byte[][] test = {{1,1,0,0},{1,1,0,1},{0,1,1,1},{0,0,1,0},{0,0,0,1}};
+//        boolean[] marked = new boolean[test.length];
+//        quadraticSieve.gaussElimination(test, marked);
+//        boolean[] selected = quadraticSieve.finalize(test, marked);
+//        ArrayList<Integer> xSmooth = new ArrayList<Integer>();
+//        xSmooth.add(0);
+//        xSmooth.add(3);
+//        xSmooth.add(71);
+//
+//        long result = quadraticSieve.finalizeGCD(BigInteger.valueOf(15347), selected, xSmooth).longValue();
+//        assertEquals(result, 103);
+//    }
 
     //@Test
     public void testPollard(){
@@ -108,6 +115,11 @@ public class TestPrimeFactoring {
     @Test
     public void fullTestQS(){
         BigInteger N = BigInteger.valueOf(15347);
+//        BigInteger N = BigInteger.valueOf(1621984134912629L);
+//        BigInteger N = BigInteger.valueOf(62615533L);
+//        BigInteger N = BigInteger.valueOf(9797);
+//        BigInteger N = BigInteger.valueOf(911121L);
+
         QuadraticSieve qs = new QuadraticSieve();
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
@@ -119,8 +131,22 @@ public class TestPrimeFactoring {
 //        assertEquals(baseFactors.get(3).intValue(), 29);
 
         ArrayList<Integer> smoothX = qs.sieve(N);
-        assertEquals(smoothX.size(), baseFactors.size()+1);
+//        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
+        byte[][] matrix = qs.buildMatrix(smoothX,N);
+        boolean[] marked = new boolean[matrix.length];
+
+        qs.gaussElimination(matrix, marked);
+        BigInteger result = qs.finalize(matrix, marked, N, smoothX);
+        for(int col = 0; col < matrix[0].length; col++){
+            for(int row = 0; row < matrix.length; row++){
+                if(matrix[row][col] == 1){
+                    System.out.print(row + " ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println();
     }
 
 }
