@@ -7,13 +7,16 @@ import java.util.List;
  */
 public class QuadraticSieve {
     private static final int   FACTOR_BASE_LIMIT_B_CONSTANT_C = 3;
-    private static final int   SIEVE_SPAN                     = 1000; //TODO: Use log of biggest element in factor base instead
+    private static final int   SIEVE_SPAN                     = 10; //TODO: Use log of biggest element in factor base instead
     private static final float SMOOTH_ZERO                    = 0.1f;
     private static final int   SMOOTH_EXTRAS                  = 1;
 
     private double factorBaseLimitB;
 
     private List<Integer> factorBasePrimes;
+    int[]   sieveCurrentX;
+    int[]   sievePrimeOffset;
+    float[] sievePrimeLog;
 
     public QuadraticSieve() {
         factorBasePrimes = new ArrayList<Integer>();
@@ -134,7 +137,7 @@ public class QuadraticSieve {
             int residue = 0;
             int Z;
             for (Z = 2; residue != prime - 1; Z++) {
-                residue = (int) ((Math.pow(Z, (prime - 1) / 2)) % (long)prime);
+                residue = BigInteger.valueOf(Z).modPow(BigInteger.valueOf((prime - 1) / 2), BigInteger.valueOf(prime)).intValue();
             }
             //Z gets plussed one to many times;
             Z--;
@@ -152,13 +155,14 @@ public class QuadraticSieve {
                 int i = 1;
                 while (i < M) {
                     tempVal *= 2;
-                    if (((int) Math.pow(t, tempVal)) % prime == 1) {
+                    if (BigInteger.valueOf(t).modPow(BigInteger.valueOf(tempVal), BigInteger.valueOf(prime)).intValue() == 1) {
                         break;
                     }
                     i++;
                 }
 
 
+                //BigInteger B = BigInteger.valueOf(C).pow((int)Math.pow(2, M - i - 1));
                 int b = (int) Math.pow(C, Math.pow(2, M - i - 1));
                 R = (R * b) % prime;
                 t = (t * b * b) % prime;
@@ -167,10 +171,10 @@ public class QuadraticSieve {
             }
         }
 
-        int[] result = new int[]{R, prime -R};
-        for(int i = 0; i < result.length; i++){
-            result[i] = (int) ((((long)result[i]) - root(N).longValue()) % prime);
-            if(result[i] < 0){
+        int[] result = new int[]{ R, prime - R };
+        for (int i = 0; i < result.length; i++) {
+            result[i] = (int) ((((long) result[i]) - root(N).longValue()) % prime);
+            if (result[i] < 0) {
                 result[i] += prime;
             }
         }
@@ -187,54 +191,74 @@ public class QuadraticSieve {
     }
 
     public ArrayList<Integer> sieve(BigInteger N) {
+        int sieveSize;
+        if (factorBasePrimes.contains(2)) {
+            sieveSize = factorBasePrimes.size() * 2 - 1;
+        } else {
+            sieveSize = factorBasePrimes.size() * 2;
+        }
+        sievePrimeLog = new float[sieveSize];
+        sievePrimeOffset = new int[sieveSize];
+        sieveCurrentX = new int[sieveSize];
+
+        //Special for prime 2!
+
+        int pos = 0;
+        for (int i = 0; i < factorBasePrimes.size(); i++) {
+            int prime = factorBasePrimes.get(i);
+            if (prime == 2) {
+                sievePrimeOffset[pos] = prime;
+                sievePrimeLog[pos] = (float) Math.log(prime);
+                sieveCurrentX[pos] = bruteForceXValuesFor2(N);
+                pos++;
+            } else {
+                int[] xArray = tonelliShanks(N, prime);
+                float logPrime = (float) Math.log(prime);
+                for (int x : xArray) {
+                    sievePrimeOffset[pos] = prime;
+                    sievePrimeLog[pos] = logPrime;
+                    sieveCurrentX[pos] = x;
+                    pos++;
+                }
+            }
+        }
+
+
         ArrayList<Integer> smoothX = new ArrayList<Integer>(factorBasePrimes.size() + SMOOTH_EXTRAS);
-        sieve(smoothX, new ArrayList<Float>(SIEVE_SPAN), N, 0);
+        ArrayList<Float> qValues = new ArrayList<Float>(SIEVE_SPAN);
+        initQValues(qValues, SIEVE_SPAN, N);
+        sieve(smoothX, qValues, N);
         return smoothX;
     }
 
-    void sieve(ArrayList<Integer> smoothX, ArrayList<Float> qValues, BigInteger N, int lowX) {
-        initQValues(qValues, SIEVE_SPAN, N);
-
-        for (int prime : factorBasePrimes) {
-            //TODO: Precalculate this shit (tonelliShanks
-            //            while (true) {
-            float logP = (float) Math.log(prime);
-            int[] xArray;
-            if (prime == 2) {
-                xArray = bruteForceXValues(lowX, prime, N); //TODO check if we can skip this
-            } else {
-                xArray = tonelliShanks(N, prime);
-            }
-            for (int x : xArray) {
-                if (x >= qValues.size() || x < lowX) {
-                    break;
-                }
-                do {
-                    qValues.set(x, qValues.get(x) - logP);
-                    if (isSmooth(qValues.get(x))) {
-                        smoothX.add(x);
-                        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
-                            return;
-                        }
+    //TODO: Precalculate this shit (tonelliShanks
+    void sieve(ArrayList<Integer> smoothX, ArrayList<Float> qValues, BigInteger N) {
+        for (int i = 0; i < sieveCurrentX.length; i++) {
+            int x = sieveCurrentX[i];
+            int prime = sievePrimeOffset[i];
+            while (x < qValues.size()) {
+                sieveCurrentX[i] += prime;
+                qValues.set(x, qValues.get(x) - sievePrimeLog[i]);
+                if (isSmooth(qValues.get(x))) {
+                    smoothX.add(x);
+                    if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
+                        return;
                     }
-                    x += prime;
                 }
-                while (x < qValues.size());
+                x = sieveCurrentX[i];
             }
-
-            //                prime *= prime;
-            //            }
         }
 
-        sieve(smoothX, qValues, N, qValues.size());
+        initQValues(qValues, qValues.size() + SIEVE_SPAN, N);
+        sieve(smoothX, qValues, N);
     }
 
-    private int[] bruteForceXValues(int x, int prime, BigInteger N) {
-        BigInteger Q = Q(x, N);
-        if (Q.mod(BigInteger.valueOf(prime)).equals(BigInteger.ZERO)) {
-            return new int[]{ x };
+    private int bruteForceXValuesFor2(BigInteger N) {
+        BigInteger Q = Q(0, N);
+        if (Q.mod(BigInteger.valueOf(2)).equals(BigInteger.ZERO)) {
+            return 0;
         } else {
-            return new int[]{ x + 1 };
+            return 1;
         }
     }
 

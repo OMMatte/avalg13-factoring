@@ -40,8 +40,8 @@ public class TestPrimeFactoring {
     public void testTS(){
         QuadraticSieve qs = new QuadraticSieve();
         int[] xs = qs.tonelliShanks(BigInteger.valueOf(10), 13);
-        assertEquals(xs[0], 7);
-        assertEquals(xs[1], 6);
+        assertEquals(xs[0], 2);
+        assertEquals(xs[1], 3);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class TestPrimeFactoring {
 
     @Test
     public void fullTestQS(){
-        BigInteger N = BigInteger.valueOf(1621984134912629L);
+        BigInteger N = BigInteger.valueOf(15347);
         QuadraticSieve qs = new QuadraticSieve();
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
