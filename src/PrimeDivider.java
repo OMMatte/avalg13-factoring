@@ -27,7 +27,8 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_ACTIONS_LIMIT = 600;
+
+    public static final long QS_ACTIONS_LIMIT = 2000;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 

@@ -6,10 +6,11 @@ import java.util.List;
  * @author mathiaslindblom
  */
 public class QuadraticSieve {
-    static final int FACTOR_BASE_LIMIT_B_CONSTANT_C = 3;
+    static final int FACTOR_BASE_LIMIT_B_CONSTANT_C = 4;
     int sieveSpan; //TODO: Use log of biggest element in factor base instead
-    static final float SMOOTH_ZERO = (float) Math.sqrt(47);
-    static final int SMOOTH_EXTRAS = 1;
+    static final float SMOOTH_ZERO   = (float) Math.sqrt(47);
+    static final int   SMOOTH_EXTRAS = 1;
+    static final BigInteger TWO = BigInteger.valueOf(2);
 
     private double factorBaseLimitB;
 
@@ -20,6 +21,10 @@ public class QuadraticSieve {
     float[] sievePrimeLog;
     BigInteger rootValForN;
     ArrayList<BigInteger> originalQValues;
+
+    BigInteger lastValueForX;
+    BigInteger lastValueForXoffSet;
+    BigInteger sqrRootTimes2;
 
     long actionsDone;
     long actionsLimit;
@@ -36,8 +41,12 @@ public class QuadraticSieve {
     public void init(BigInteger N) {
         factorBasePrimes = new ArrayList<Integer>();
         originalQValues = new ArrayList<BigInteger>();
-        rootValForN = PrimeDivider.root(2, N, true);
         actionsDone = 0;
+
+        rootValForN = PrimeDivider.root(2, N, true);
+        sqrRootTimes2 = rootValForN.multiply(BigInteger.valueOf(2));
+        lastValueForX = rootValForN.multiply(rootValForN).subtract(N);
+        lastValueForXoffSet = BigInteger.ZERO;
     }
 
     /**
@@ -77,7 +86,7 @@ public class QuadraticSieve {
             }
         }
         //TODO test:  (int) Math.log(factorBasePrimes.get(getFactorBasePrimes().size()-1));
-        sieveSpan = 1000;
+        sieveSpan = 1500;
     }
 
     int legendre(BigInteger N, int p) {
@@ -127,10 +136,8 @@ public class QuadraticSieve {
         return false;
     }
 
-    public BigInteger Q(BigInteger x, BigInteger N) {
-        BigInteger rootVal = rootValForN;
-        BigInteger quad = ((rootVal.add(x)).multiply(rootVal.add(x)));
-        BigInteger result = quad.subtract(N);
+    public BigInteger Q(BigInteger lastValue, BigInteger offset, BigInteger sqrTimes2) {
+        BigInteger result = lastValue.add(sqrTimes2).add(offset);
         return result;
     }
 
@@ -235,9 +242,10 @@ public class QuadraticSieve {
         originalQValues.ensureCapacity(size);
 
         for (int x = qValues.size(); x < size; x++) {
-            BigInteger q = Q(BigInteger.valueOf(x), N);
-            qValues.add(x, q);
-            originalQValues.add(x, q);
+            lastValueForX = Q(lastValueForX, lastValueForXoffSet, sqrRootTimes2);
+            qValues.add(lastValueForX);
+            originalQValues.add(lastValueForX);
+            lastValueForXoffSet = lastValueForXoffSet.add(TWO);
         }
     }
 
@@ -281,6 +289,12 @@ public class QuadraticSieve {
         ArrayList<Integer> smoothX = new ArrayList<Integer>(factorBasePrimes.size() + SMOOTH_EXTRAS);
         ArrayList<BigInteger> qValues = new ArrayList<BigInteger>(sieveSpan);
         originalQValues = new ArrayList<BigInteger>(sieveSpan);
+
+        //Special to avoid calcualation problems in Q(), ask Mathias
+        qValues.add(lastValueForX);
+        originalQValues.add(lastValueForX);
+        lastValueForXoffSet = lastValueForXoffSet.add(BigInteger.ONE);
+
         initQValues(qValues, sieveSpan, N);
         if (sieve(smoothX, qValues, N)) {
             return smoothX;
@@ -323,7 +337,9 @@ public class QuadraticSieve {
     }
 
     private int bruteForceXValuesFor2(BigInteger N) {
-        BigInteger Q = Q(BigInteger.ZERO, N);
+
+        //IMPORTANT! Must be called before field is changed in initQValues!
+        BigInteger Q = lastValueForX;
         if (Q.mod(BigInteger.valueOf(2)).equals(BigInteger.ZERO)) {
             return 0;
         } else {

@@ -188,6 +188,7 @@ public class TestPrimeFactoring {
 
                 assertEquals(computedN, current);
             } else {
+                System.out.println("Failed: " + current);
                 failed++;
             }
         }
