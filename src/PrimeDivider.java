@@ -17,7 +17,7 @@ public class PrimeDivider {
     public static final int IS_PRIME_CERTAINTY = 7;
 
     //The number of prime tables to be used by trial division algorithm.
-    public static final int TRIAL_DIVISION_PRIME_TABLES = 2;
+    public static final int TRIAL_DIVISION_PRIME_TABLES = 1;
 
     //The number of roots to be tried with potensFinder. 2 ... Constant.
     public static final int PERFECT_POTENS_MAX_ROOT = 6;
@@ -25,8 +25,11 @@ public class PrimeDivider {
     //If we should try to find potenses after a algorithm has found a prime (not for trialDivision or potens search itself
     public static final boolean TRY_POTENS_SEARCH_AFTER_ADD = true;
 
-    //The amount of milliseconds the pollard factor algorithm should spend on a single value.
-    public static final long TIME_LIMIT = 100;
+    //The amount of milliseconds the algorithm should spend on a single value.
+    public static final long POLLARD_RHO_TIME_LIMIT = 20;
+    public static final long QS_TIME_LIMIT          = 150*30;
+
+    public static final int MAXIMUM_BIT_LENGTH = 100;
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
     //time a prime factor have been found and added to foundPrimes list.
@@ -85,31 +88,71 @@ public class PrimeDivider {
 
 
         //Try to factorize by using trialDivision algorithm.
-        //        if (trialDivision()) {
-        //            return true;
-        //        }
 
-        //        if (trialDivision()) {
-        //            return true;
-        //        }
-
-        QuadraticSieve qs = new QuadraticSieve(currentValue);
-        qs.calculateFactorBaseLimitB(currentValue);
-        qs.calculateFactoreBase(currentValue);
-        for (int i = 1; i < 100; i++) {
-            qs.tonelliShanks(currentValue, qs.getFactorBasePrimes().get(i));
-        }
-
-
-        if (pollard(currentValue, System.currentTimeMillis() + TIME_LIMIT, totalAmountPotenses)) {
+        if (trialDivision()) {
             return true;
         }
 
-        if (potensFinder()) {
+        if (currentValue.bitLength() > MAXIMUM_BIT_LENGTH) {
+            return false;
+        }
+
+        //Try to factorize whats left using pollard rho
+        //        if (pollard(currentValue, System.currentTimeMillis() + POLLARD_RHO_TIME_LIMIT, totalAmountPotenses)) {
+        //            return true;
+        //        }
+
+        //Now try to factorize whats left using QS
+        if (quadraticSieve(currentValue, System.currentTimeMillis() + QS_TIME_LIMIT)) {
             return true;
         }
+
+        //Lastly try a desperate potens finder
+//        if (potensFinder()) {
+//            return true;
+//        }
 
         return false;
+    }
+
+    boolean quadraticSieve(BigInteger N, long timeLimit) {
+        QuadraticSieve qs = new QuadraticSieve();
+
+        qs.init(N);
+        qs.calculateFactorBaseLimitB(N);
+        qs.calculateFactoreBase(N);
+
+        ArrayList<Integer> smoothX = qs.sieve(N, timeLimit);
+        if (smoothX == null) {
+            return false;
+        }
+
+        byte[][] matrix = qs.buildMatrix(smoothX, N);
+        boolean[] marked = new boolean[matrix.length];
+        qs.gaussElimination(matrix, marked);
+
+        BigInteger[] result = qs.finalize(matrix, marked, N, smoothX, timeLimit);
+
+        if (result == null) {
+            //We did not find a prime, return false.
+            //TODO: try again?
+            return false;
+        } else {
+            boolean success = true;
+            if (result[0].isProbablePrime(IS_PRIME_CERTAINTY)) {
+                addPrime(result[0]);
+            } else {
+                success = quadraticSieve(result[0], timeLimit);
+            }
+            if(success){
+                if (result[1].isProbablePrime(IS_PRIME_CERTAINTY)) {
+                    addPrime(result[1]);
+                } else {
+                    success = quadraticSieve(result[1], timeLimit);
+                }
+            }
+            return success;
+        }
     }
 
     /**

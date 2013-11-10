@@ -1,6 +1,5 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,6 +12,8 @@ import static org.junit.Assert.assertEquals;
  * @author mathiaslindblom
  */
 public class TestPrimeFactoring {
+    final int NUM_QS_TESTS = 100;
+
     private PrimeDivider pd = new PrimeDivider();
 
 //    @Test
@@ -41,7 +42,8 @@ public class TestPrimeFactoring {
     @Test
     public void testLegendre(){
         BigInteger N = BigInteger.valueOf(6);
-        QuadraticSieve qs = new QuadraticSieve(N);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.init(N);
         int residue = qs.legendre(N, 11);
         assertEquals(residue, -1);
     }
@@ -49,7 +51,8 @@ public class TestPrimeFactoring {
     @Test
     public void testTS(){
         BigInteger N = BigInteger.valueOf(10);
-        QuadraticSieve qs = new QuadraticSieve(N);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.init(N);
         int[] xs = qs.tonelliShanks(N, 13);
         assertEquals(xs[1], 2);
         assertEquals(xs[0], 3);
@@ -58,7 +61,8 @@ public class TestPrimeFactoring {
 //    @Test
     public void testQS(){
         BigInteger N = BigInteger.valueOf(100);
-        QuadraticSieve qs = new QuadraticSieve(N);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.init(N);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -116,17 +120,20 @@ public class TestPrimeFactoring {
         }
     }
 
-    @Test
+//    @Test
     public void fullTestQS(){
+        long timeLimit = 1000;
 //        BigInteger N = BigInteger.valueOf(15347);
-        BigInteger N = BigInteger.valueOf(1621984134912629L);
+//        BigInteger N = BigInteger.valueOf(1621984134912629L);
 //        BigInteger N = new BigInteger("712470926339797736608284055933");
-//        BigInteger N = BigInteger.valueOf(5838554709437459L);
+        BigInteger N = BigInteger.valueOf(5838554709437459L);
 //        BigInteger N = BigInteger.valueOf(62615533L);
 //        BigInteger N = BigInteger.valueOf(9797);
 //        BigInteger N = BigInteger.valueOf(911121L);
+//        BigInteger N = BigInteger.valueOf(3837523L);
 
-        QuadraticSieve qs = new QuadraticSieve(N);
+        QuadraticSieve qs = new QuadraticSieve();
+        qs.init(N);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -136,21 +143,15 @@ public class TestPrimeFactoring {
 //        assertEquals(baseFactors.get(2).intValue(), 23);
 //        assertEquals(baseFactors.get(3).intValue(), 29);
 
-        ArrayList<Integer> smoothX = qs.sieve(N);
+        ArrayList<Integer> smoothX = qs.sieve(N, System.currentTimeMillis() + timeLimit);
 //        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
-        Collections.sort(smoothX);
-//        for(int i = 1; i < smoothX.size(); i++){
-//            if(smoothX.get(i-1).equals(smoothX.get(i))){
-//                Collections.sort(smoothX);
-//            }
-//        }
         byte[][] matrix = qs.buildMatrix(smoothX,N);
         boolean[] marked = new boolean[matrix.length];
         int[] counterMatrix = new int[marked.length];
 
         qs.gaussElimination(matrix, marked);
-        BigInteger result = qs.finalize(matrix, marked, N, smoothX);
+        BigInteger[] result = qs.finalize(matrix, marked, N, smoothX, System.currentTimeMillis() + timeLimit);
         for(int col = 0; col < matrix[0].length; col++){
             for(int row = 0; row < matrix.length; row++){
                 if(matrix[row][col] == 1){
@@ -166,6 +167,36 @@ public class TestPrimeFactoring {
             }
         }
         System.out.println();
+    }
+
+    @Test
+    public void testFactorizeRange() {
+        BigInteger startN = BigInteger.valueOf(2).pow(90);
+        BigInteger endN = startN.add(BigInteger.valueOf(NUM_QS_TESTS));
+        PrimeDivider pd = new PrimeDivider();
+
+        int failed = 0;
+
+        for(BigInteger current = startN; !current.equals(endN); current = current.add(BigInteger.ONE)) {
+            if(pd.factorize(current)) {
+                ArrayList<BigInteger> factors = (ArrayList<BigInteger>)pd.getFoundPrimes();
+
+                BigInteger computedN = BigInteger.ONE;
+
+                for(BigInteger factor : factors) {
+                    assert(factor.isProbablePrime(PrimeDivider.IS_PRIME_CERTAINTY));
+                    computedN = computedN.multiply(factor);
+                }
+
+                assertEquals(computedN, current);
+            } else {
+                failed++;
+            }
+        }
+
+        if(failed > 0) {
+            System.err.println("Failed to factorize " + failed + " out of " + NUM_QS_TESTS + " numbers.");
+        }
     }
 
 }
