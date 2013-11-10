@@ -14,18 +14,22 @@ public class QuadraticSieve {
     private double factorBaseLimitB;
 
     private List<Integer> factorBasePrimes;
-    int[]      sieveCurrentX;
-    int[]      sievePrimeOffset;
-    float[]    sievePrimeLog;
+    int[]                 sieveCurrentX;
+    int[]                 sievePrimeOffset;
+    float[]               sievePrimeLog;
+    ArrayList<BigInteger> originalQvalues;
+
     BigInteger rootValForN;
 
     public QuadraticSieve() {}
+
     public QuadraticSieve(BigInteger N) {
         init(N);
     }
 
     public void init(BigInteger N) {
         factorBasePrimes = new ArrayList<Integer>();
+        originalQvalues = new ArrayList<BigInteger>();
         rootValForN = PrimeDivider.root(2, N, true);
     }
 
@@ -67,7 +71,6 @@ public class QuadraticSieve {
         }
         //TODO test:  (int) Math.log(factorBasePrimes.get(getFactorBasePrimes().size()-1));
         sieveSpan = 1000;
-
     }
 
     int legendre(BigInteger N, int p) {
@@ -118,24 +121,11 @@ public class QuadraticSieve {
     }
 
     public BigInteger Q(BigInteger x, BigInteger N) {
-        //Using long to floor the value.
-        //TODO OPTIMIZE THIS MOTHERFUCKER
         BigInteger rootVal = rootValForN;
-
-        //TODO: I'm guessing this should be integer and not decimal.
         BigInteger quad = ((rootVal.add(x)).multiply(rootVal.add(x)));
         BigInteger result = quad.subtract(N);
-
-
-        //        BigInteger result =  x.multiply(x).subtract(N);
-
-
         return result;
     }
-
-    //    public BigInteger root(BigInteger value) {
-    //        return PrimeDivider.root(2, value, true);
-    //    }
 
     public List<Integer> getFactorBasePrimes() {
         return factorBasePrimes;
@@ -235,9 +225,12 @@ public class QuadraticSieve {
 
     private void initQValues(ArrayList<BigInteger> qValues, int size, BigInteger N) {
         qValues.ensureCapacity(size);
+        originalQvalues.ensureCapacity(size);
 
         for (int x = qValues.size(); x < size; x++) {
-            qValues.add(x, Q(BigInteger.valueOf(x), N));
+            BigInteger q = Q(BigInteger.valueOf(x), N);
+            qValues.add(x, q);
+            originalQvalues.add(x, q);
         }
     }
 
@@ -264,7 +257,7 @@ public class QuadraticSieve {
                 pos++;
             } else {
                 int[] xArray = tonelliShanks(N, prime);
-                if(System.currentTimeMillis() > timeLimit){
+                if (System.currentTimeMillis() > timeLimit) {
                     return null;
                 }
                 float logPrime = (float) Math.log(prime);
@@ -333,7 +326,7 @@ public class QuadraticSieve {
     byte[][] buildMatrix(ArrayList<Integer> smoothX, BigInteger N) {
         byte[][] matrix = new byte[smoothX.size()][factorBasePrimes.size()];
         for (int row = 0; row < matrix.length; row++) {
-            BigInteger qValue = Q(BigInteger.valueOf(smoothX.get(row)), N);
+            BigInteger qValue = originalQvalues.get(smoothX.get(row));
             for (int col = 0; col < matrix[0].length; col++) {
                 boolean odd = false;
                 BigInteger prime = BigInteger.valueOf(factorBasePrimes.get(col));
@@ -380,7 +373,7 @@ public class QuadraticSieve {
         }
 
         for (long val = 1; val < Math.pow(2, unmarkedList.size()); val++) {
-            if(System.currentTimeMillis() > timeLimit){
+            if (System.currentTimeMillis() > timeLimit) {
                 return null;
             }
             boolean[] oneSetRows = new boolean[matrix.length];
@@ -419,7 +412,7 @@ public class QuadraticSieve {
 
             BigInteger result = GCD(N, selectedRows, smoothX);
             if (!result.equals(N) && !result.equals(BigInteger.ONE)) {
-                return new BigInteger[]{result, N.divide(result)};
+                return new BigInteger[]{ result, N.divide(result) };
             }
         }
 
@@ -433,13 +426,26 @@ public class QuadraticSieve {
         BigInteger rootN = rootValForN;
         for (int row = 0; row < selectedRows.length; row++) {
             if (selectedRows[row]) {
-
-                qValue = qValue.multiply(Q(BigInteger.valueOf(smoothX.get(row)), N));
+                qValue = qValue.multiply(originalQvalues.get(smoothX.get(row)));
                 xValue = xValue.multiply((rootN.add(BigInteger.valueOf(smoothX.get(row)))));
             }
         }
-        qValue = PrimeDivider.root(2, qValue, false);
+        qValue = sqrt(qValue);
         BigInteger fuckingFinalResult = N.gcd(xValue.subtract(qValue));
         return fuckingFinalResult;
+    }
+
+    static boolean didWork;
+
+    public static BigInteger sqrt(BigInteger A) {
+        BigInteger temp = A.shiftRight(BigInteger.valueOf(A.bitLength()).shiftRight(1).intValue()), result = null;
+        while (true) {
+            result = temp.add(A.divide(temp)).shiftRight(1);
+            if (!temp.equals(result)) { temp = result; } else { break; }
+        }
+        didWork = false;
+        if (result.multiply(result).equals(A)) { didWork = true; }
+
+        return result;
     }
 }
