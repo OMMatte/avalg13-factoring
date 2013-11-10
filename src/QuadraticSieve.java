@@ -6,11 +6,11 @@ import java.util.List;
  * @author mathiaslindblom
  */
 public class QuadraticSieve {
-    static final int        FACTOR_BASE_LIMIT_B_CONSTANT_C = 4;
+    static final int        FACTOR_BASE_LIMIT_B_CONSTANT_C = 2;
     static final float      SMOOTH_ZERO                    = (float) (0.1f);
     static final int        SMOOTH_EXTRAS                  = 1;
     static final BigInteger TWO                            = BigInteger.valueOf(2);
-    static final int        SIEVE_SPAN                     = 100000;
+    int SIEVE_SPAN;
 
     private double factorBaseLimitB;
 
@@ -39,6 +39,7 @@ public class QuadraticSieve {
 
     public QuadraticSieve(BigInteger N, long timeLimit) {
         init(N);
+        SIEVE_SPAN = (int) Math.pow((float) (N.bitLength()) / 15f, 6);
         this.timeLimit = System.currentTimeMillis() + timeLimit;
     }
 
@@ -143,8 +144,7 @@ public class QuadraticSieve {
     public BigInteger Q(BigInteger x, BigInteger N) {
         BigInteger rootVal = rootValForN;
         BigInteger quad = ((rootVal.add(x)).multiply(rootVal.add(x)));
-        BigInteger result = quad.subtract(N);
-        return result;
+        return quad.subtract(N);
     }
 
     public List<Integer> getFactorBasePrimes() {
@@ -332,11 +332,16 @@ public class QuadraticSieve {
 
                     if (qLogValues[relativeX] < threshHold) {
                         BigInteger qValue = Q(BigInteger.valueOf(x), N);
+                        long q = 0;
+                        boolean useLong = false;
+                        for (int col = 0; col < factorBasePrimesSize; col++) {
 
-                        if (qValue.bitLength() < 64) {
-                            long q = qValue.longValue();
+                            if (useLong || qValue.bitLength() < 64) {
+                                if(!useLong){
+                                    q = qValue.longValue();
+                                    useLong = true;
+                                }
 
-                            for (int col = 0; col < factorBasePrimesSize; col++) {
                                 row[col] = 0;
                                 long p = factorBasePrimes.get(col);
 
@@ -350,9 +355,7 @@ public class QuadraticSieve {
                                     smoothX.add(x);
                                     break;
                                 }
-                            }
-                        } else {
-                            for (int col = 0; col < factorBasePrimesSize; col++) {
+                            } else {
                                 row[col] = 0;
                                 long p = factorBasePrimes.get(col);
 

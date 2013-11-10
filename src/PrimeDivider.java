@@ -27,9 +27,9 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_TIME_LIMIT = 4500;
+    public static final long QS_TIME_LIMIT = 1000;
 
-    public static final int MAXIMUM_BIT_LENGTH = 100;
+    public static final int MAXIMUM_BIT_LENGTH = 99;
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
     //time a prime factor have been found and added to foundPrimes list.
@@ -117,6 +117,8 @@ public class PrimeDivider {
 
     //TODO: Maybe decrease actions limit when we do QS again.
     boolean quadraticSieve(BigInteger N, long actionsLimit) {
+        potensFinder(N, 1);
+
         QuadraticSieve qs = new QuadraticSieve(N, actionsLimit);
 
         qs.calculateFactorBaseLimitB(N);
@@ -290,7 +292,8 @@ public class PrimeDivider {
                     //Indicate that a root has been found, to keep trying to split currentValue up into roots.
                     //Break, because currentValue has been changed, and we want to start over with n:th-root checking.
                     rootFound = true;
-                    break;
+                    throw new RuntimeException();
+//                    break;
                 }
             }
 
