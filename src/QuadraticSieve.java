@@ -533,8 +533,7 @@ public class QuadraticSieve {
             }
         }
 
-        throw new RuntimeException();
-//        return null;
+        return null;
     }
 
 
