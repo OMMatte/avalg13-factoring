@@ -23,6 +23,9 @@ public class QuadraticSieve {
     //    ArrayList<BigInteger> originalQValues;
     float[]    primeLogValues;
 
+    byte[][] matrix;
+
+
     BigInteger qValueForLastX;
     BigInteger lastValueForXoffSet;
     BigInteger sqrRootTimes2;
@@ -240,6 +243,9 @@ public class QuadraticSieve {
         return result;
     }
 
+    //To be used in the matrix.
+    private byte[] row;
+
     public ArrayList<Long> preSieve(BigInteger N) {
         int sieveSize;
         if (factorBasePrimes.contains(2)) {
@@ -279,6 +285,8 @@ public class QuadraticSieve {
 
 
         ArrayList<Long> smoothX = new ArrayList<Long>(factorBasePrimes.size() + SMOOTH_EXTRAS);
+        matrix = new byte[factorBasePrimes.size() + SMOOTH_EXTRAS][factorBasePrimes.size()];
+
         float[] qValues = new float[SIEVE_SPAN];
         //        originalQValues = new ArrayList<BigInteger>(sieveSpan);
 
@@ -286,6 +294,8 @@ public class QuadraticSieve {
         //        qValues.add((float) Math.log(qValueForLastX.doubleValue()));
         //        originalQValues.add(qValueForLastX);
         //        lastValueForXoffSet = lastValueForXoffSet.add(BigInteger.ONE);
+
+        row = new byte[factorBasePrimes.size()];
 
         initQValues(0, qValues, N);
         if (sieve(0, smoothX, qValues, N)) {
@@ -306,9 +316,8 @@ public class QuadraticSieve {
         }
     }
 
+    //TODO: Remove smoothX.
     boolean sieve(long offsetX, ArrayList<Long> smoothX, float[] qLogValues, BigInteger N) {
-
-        ArrayList<Long> suspiciosSmoothX = new ArrayList<Long>();
         for (int i = 0; i < sieveCurrentX.length; i++) {
             //TODO: Check if maybe long
             long x = sieveCurrentX[i];
@@ -316,43 +325,72 @@ public class QuadraticSieve {
             while (x < offsetX + qLogValues.length) {
                 sieveCurrentX[i] += prime;
                 int relativeX = (int) (x - offsetX);
-                qLogValues[relativeX] -= primeLogValues[i];
 
-                if (qLogValues[relativeX] < threshHold) {
-                    suspiciosSmoothX.add(x);
+                if(qLogValues[relativeX] < Float.POSITIVE_INFINITY) {
+                    qLogValues[relativeX] -= primeLogValues[i];
+
+                    if (qLogValues[relativeX] < threshHold) {
+                        BigInteger qValue = Q(BigInteger.valueOf(x), N);
+                        for (int col = 0; col < factorBasePrimes.size(); col++) {
+                            row[col] = 0;
+                            int p = factorBasePrimes.get(col);
+                            BigInteger BIGprime = BigInteger.valueOf(p);
+                            BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
+                            while (qr[1].equals(BigInteger.ZERO)) {
+                                qValue = qr[0];
+                                row[col] = (byte) (row[col] == 1 ? 0 : 1);
+                                qr = qValue.divideAndRemainder(BIGprime);
+                            }
+                            if (qValue.equals(BigInteger.ONE)) {
+                                matrix[smoothX.size()] = row;
+                                row = new byte[row.length];
+
+                                smoothX.add(x);
+
+                                break;
+                            }
+                        }
+
+                        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
+                            return true;
+                        }
+
+                        qLogValues[relativeX] = Float.POSITIVE_INFINITY;
+                    }
                 }
+
 
                 x = sieveCurrentX[i];
             }
         }
 
-        for (long x : suspiciosSmoothX) {
-
-            int relativeX = (int) (x -offsetX);
-            float qLogValue = qLogValues[relativeX];
-            if (qLogValue < SMOOTH_ZERO) {
-                smoothX.add(x);
-                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
-            } else if (qLogValue < threshHold) {
-                BigInteger qValue = Q(BigInteger.valueOf(x), N);
-                for (int prime : factorBasePrimes) {
-                    BigInteger BIGprime = BigInteger.valueOf(prime);
-                    BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
-                    while (qr[1].equals(BigInteger.ZERO)) {
-                        qValue = qr[0];
-                        qr = qValue.divideAndRemainder(BIGprime);
-                    }
-                    if (qValue.equals(BigInteger.ONE)) {
-                        smoothX.add(x);
-                        break;
-                    }
-                }
-                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
-            }
-        }
-        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
-            return true;
-        }
+//        for (long x : suspiciosSmoothX) {
+//
+//            int relativeX = (int) (x -offsetX);
+//            float qLogValue = qLogValues[relativeX];
+//            if (qLogValue < SMOOTH_ZERO) {
+//                smoothX.add(x);
+//                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
+//            } else if (qLogValue < threshHold) {
+//                BigInteger qValue = Q(BigInteger.valueOf(x), N);
+//                for (int prime : factorBasePrimes) {
+//                    BigInteger BIGprime = BigInteger.valueOf(prime);
+//                    BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
+//                    while (qr[1].equals(BigInteger.ZERO)) {
+//                        qValue = qr[0];
+//                        qr = qValue.divideAndRemainder(BIGprime);
+//                    }
+//                    if (qValue.equals(BigInteger.ONE)) {
+//                        smoothX.add(x);
+//                        break;
+//                    }
+//                }
+//                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
+//            }
+//        }
+//        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
+//            return true;
+//        }
 
         if (System.currentTimeMillis() > timeLimit) {
             return false;
@@ -377,11 +415,11 @@ public class QuadraticSieve {
 
     byte[][] buildMatrix(ArrayList<Long> smoothX, BigInteger N) {
 
-        byte[][] matrix = new byte[smoothX.size()][factorBasePrimes.size()];
-        for (int row = 0; row < matrix.length; row++) {
+        byte[][] oldMatrix = new byte[smoothX.size()][factorBasePrimes.size()];
+        for (int row = 0; row < oldMatrix.length; row++) {
             //TODO Fix matrix in Sieve
             BigInteger qValue = Q(BigInteger.valueOf(smoothX.get(row)), N);
-            for (int col = 0; col < matrix[0].length; col++) {
+            for (int col = 0; col < oldMatrix[0].length; col++) {
                 boolean odd = false;
                 BigInteger prime = BigInteger.valueOf(factorBasePrimes.get(col));
                 BigInteger[] qr = qValue.divideAndRemainder(prime);
@@ -391,10 +429,10 @@ public class QuadraticSieve {
                     odd = !odd;
                     qr = qValue.divideAndRemainder(prime);
                 }
-                matrix[row][col] = (byte) (odd ? 1 : 0);
+                oldMatrix[row][col] = (byte) (odd ? 1 : 0);
             }
         }
-        return matrix;
+        return oldMatrix;
     }
 
     void gaussElimination(byte[][] matrix, boolean[] markedRows) {

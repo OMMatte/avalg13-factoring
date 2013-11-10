@@ -141,7 +141,7 @@ public class TestPrimeFactoring {
         ArrayList<Long> smoothX = qs.preSieve(N);
 //        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
-        byte[][] matrix = qs.buildMatrix(smoothX,N);
+        byte[][] matrix = qs.matrix;
         boolean[] marked = new boolean[matrix.length];
         int[] counterMatrix = new int[marked.length];
 

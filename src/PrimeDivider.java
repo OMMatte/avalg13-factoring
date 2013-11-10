@@ -27,7 +27,7 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_TIME_LIMIT = 150*30;
+    public static final long QS_TIME_LIMIT = 4500;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 
@@ -127,7 +127,7 @@ public class PrimeDivider {
             return false;
         }
 
-        byte[][] matrix = qs.buildMatrix(smoothX, N);
+        byte[][] matrix = qs.matrix;
         boolean[] marked = new boolean[matrix.length];
         qs.gaussElimination(matrix, marked);
 
