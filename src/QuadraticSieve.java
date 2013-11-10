@@ -26,22 +26,20 @@ public class QuadraticSieve {
     BigInteger lastValueForXoffSet;
     BigInteger sqrRootTimes2;
 
-    long actionsDone;
-    long actionsLimit;
+    long timeLimit;
 
-    public QuadraticSieve(long actionsLimit) {
-        this.actionsLimit = actionsLimit;
+    public QuadraticSieve(long timeLimit) {
+        this.timeLimit = System.currentTimeMillis() + timeLimit;
     }
 
-    public QuadraticSieve(BigInteger N, long actionsLimit) {
+    public QuadraticSieve(BigInteger N, long timeLimit) {
         init(N);
-        this.actionsLimit = actionsLimit;
+        this.timeLimit = System.currentTimeMillis() + timeLimit;
     }
 
     public void init(BigInteger N) {
         factorBasePrimes = new ArrayList<Integer>();
         originalQValues = new ArrayList<BigInteger>();
-        actionsDone = 0;
 
         rootValForN = PrimeDivider.root(2, N, true);
         sqrRootTimes2 = rootValForN.multiply(BigInteger.valueOf(2));
@@ -53,7 +51,6 @@ public class QuadraticSieve {
      * Step 4
      */
     public void calculateFactorBaseLimitB(BigInteger N) {
-
         double logVal = (2 * Math.log(rootValForN.longValue()));
         double compositeLogVal = logVal * Math.log(logVal);
         double expo = 0.5 * Math.sqrt(compositeLogVal);
@@ -249,7 +246,7 @@ public class QuadraticSieve {
         }
     }
 
-    public ArrayList<Integer> sieve(BigInteger N) {
+    public ArrayList<Integer> preSieve(BigInteger N) {
         int sieveSize;
         if (factorBasePrimes.contains(2)) {
             sieveSize = factorBasePrimes.size() * 2 - 1;
@@ -272,9 +269,6 @@ public class QuadraticSieve {
                 pos++;
             } else {
                 int[] xArray = tonelliShanks(N, prime);
-                if (++actionsDone > actionsLimit) {
-                    return null;
-                }
                 float logPrime = (float) Math.log(prime);
                 for (int x : xArray) {
                     sievePrimeOffset[pos] = prime;
@@ -303,7 +297,6 @@ public class QuadraticSieve {
         }
     }
 
-    //TODO: Precalculate this shit (tonelliShanks
     boolean sieve(ArrayList<Integer> smoothX, ArrayList<BigInteger> qValues, BigInteger N) {
         for (int i = 0; i < sieveCurrentX.length; i++) {
             int x = sieveCurrentX[i];
@@ -328,7 +321,7 @@ public class QuadraticSieve {
                 x = sieveCurrentX[i];
             }
         }
-        if (++actionsDone > actionsLimit) {
+        if (System.currentTimeMillis() > timeLimit) {
             return false;
         }
 
@@ -397,9 +390,9 @@ public class QuadraticSieve {
         }
 
         for (long val = 1; val < Math.pow(2, unmarkedList.size()); val++) {
-            if (++actionsDone > actionsLimit) {
-                return null;
-            }
+//            if (System.currentTimeMillis() > timeLimit) {
+//                return null;
+//            }
             boolean[] oneSetRows = new boolean[matrix.length];
             boolean[] selectedRows = new boolean[matrix.length];
             long unmarkedBitVal = 1;

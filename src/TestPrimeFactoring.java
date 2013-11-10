@@ -1,6 +1,5 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class TestPrimeFactoring {
     @Test
     public void testLegendre(){
         BigInteger N = BigInteger.valueOf(6);
-        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_ACTIONS_LIMIT);
+        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_TIME_LIMIT);
         int residue = qs.legendre(N, 11);
         assertEquals(residue, -1);
     }
@@ -50,7 +49,7 @@ public class TestPrimeFactoring {
     @Test
     public void testTS(){
         BigInteger N = BigInteger.valueOf(10);
-        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_ACTIONS_LIMIT);
+        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_TIME_LIMIT);
         int[] xs = qs.tonelliShanks(N, 13);
         assertEquals(xs[1], 2);
         assertEquals(xs[0], 3);
@@ -59,7 +58,7 @@ public class TestPrimeFactoring {
 //    @Test
     public void testQS(){
         BigInteger N = BigInteger.valueOf(100);
-        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_ACTIONS_LIMIT);
+        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_TIME_LIMIT);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -129,7 +128,7 @@ public class TestPrimeFactoring {
 //        BigInteger N = BigInteger.valueOf(911121L);
 //        BigInteger N = BigInteger.valueOf(3837523L);
 
-        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_ACTIONS_LIMIT);
+        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_TIME_LIMIT);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -139,7 +138,7 @@ public class TestPrimeFactoring {
 //        assertEquals(baseFactors.get(2).intValue(), 23);
 //        assertEquals(baseFactors.get(3).intValue(), 29);
 
-        ArrayList<Integer> smoothX = qs.sieve(N);
+        ArrayList<Integer> smoothX = qs.preSieve(N);
 //        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
         byte[][] matrix = qs.buildMatrix(smoothX,N);

@@ -27,8 +27,7 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-
-    public static final long QS_ACTIONS_LIMIT = 2000;
+    public static final long QS_TIME_LIMIT = 150*30;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 
@@ -104,7 +103,7 @@ public class PrimeDivider {
         //        }
 
         //Now try to factorize whats left using QS
-        if (quadraticSieve(currentValue, QS_ACTIONS_LIMIT)) {
+        if (quadraticSieve(currentValue, QS_TIME_LIMIT)) {
             return true;
         }
 
@@ -123,7 +122,7 @@ public class PrimeDivider {
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
 
-        ArrayList<Integer> smoothX = qs.sieve(N);
+        ArrayList<Integer> smoothX = qs.preSieve(N);
         if (smoothX == null) {
             return false;
         }
