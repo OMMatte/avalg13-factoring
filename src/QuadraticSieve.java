@@ -318,6 +318,7 @@ public class QuadraticSieve {
 
     //TODO: Remove smoothX.
     boolean sieve(long offsetX, ArrayList<Long> smoothX, float[] qLogValues, BigInteger N) {
+        int factorBasePrimesSize = factorBasePrimes.size();
         for (int i = 0; i < sieveCurrentX.length; i++) {
             //TODO: Check if maybe long
             long x = sieveCurrentX[i];
@@ -335,7 +336,7 @@ public class QuadraticSieve {
                         if (qValue.bitLength() < 64) {
                             long q = qValue.longValue();
 
-                            for (int col = 0; col < factorBasePrimes.size(); col++) {
+                            for (int col = 0; col < factorBasePrimesSize; col++) {
                                 row[col] = 0;
                                 long p = factorBasePrimes.get(col);
 
@@ -351,7 +352,7 @@ public class QuadraticSieve {
                                 }
                             }
                         } else {
-                            for (int col = 0; col < factorBasePrimes.size(); col++) {
+                            for (int col = 0; col < factorBasePrimesSize; col++) {
                                 row[col] = 0;
                                 long p = factorBasePrimes.get(col);
 
@@ -372,7 +373,7 @@ public class QuadraticSieve {
                         }
 
 
-                        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
+                        if (smoothX.size() >= factorBasePrimesSize + SMOOTH_EXTRAS) {
                             return true;
                         }
 
