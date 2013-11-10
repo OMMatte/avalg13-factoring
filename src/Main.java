@@ -52,7 +52,6 @@ public class Main {
 
         for (int i = 0; i < inputNumbers.size(); i++) {
             BigInteger n = inputNumbers.get(i);
-
             if (primeDivider.factorize(n)) {
                 List<BigInteger> primes = primeDivider.getFoundPrimes();
                 if(debug){

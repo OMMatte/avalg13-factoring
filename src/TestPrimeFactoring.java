@@ -118,17 +118,17 @@ public class TestPrimeFactoring {
 
 //    @Test
     public void fullTestQS(){
-        long timeLimit = 1000;
+        long timeLimit = 1000000;
 //        BigInteger N = BigInteger.valueOf(15347);
 //        BigInteger N = BigInteger.valueOf(1621984134912629L);
 //        BigInteger N = new BigInteger("712470926339797736608284055933");
-        BigInteger N = BigInteger.valueOf(5838554709437459L);
-//        BigInteger N = BigInteger.valueOf(62615533L);
+//        BigInteger N = BigInteger.valueOf(5838554709437459L);
+        BigInteger N = BigInteger.valueOf(62615533L);
 //        BigInteger N = BigInteger.valueOf(9797);
 //        BigInteger N = BigInteger.valueOf(911121L);
 //        BigInteger N = BigInteger.valueOf(3837523L);
 
-        QuadraticSieve qs = new QuadraticSieve(N, PrimeDivider.QS_TIME_LIMIT);
+        QuadraticSieve qs = new QuadraticSieve(N, timeLimit);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
         List<Integer> baseFactors = qs.getFactorBasePrimes();
@@ -176,6 +176,7 @@ public class TestPrimeFactoring {
 
         for(BigInteger current = startN; !current.equals(endN); current = current.add(BigInteger.ONE)) {
             if(pd.factorize(current)) {
+                System.out.println("Success: " + current);
                 ArrayList<BigInteger> factors = (ArrayList<BigInteger>)pd.getFoundPrimes();
 
                 BigInteger computedN = BigInteger.ONE;
