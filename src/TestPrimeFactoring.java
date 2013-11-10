@@ -173,6 +173,8 @@ public class TestPrimeFactoring {
 
         int failed = 0;
 
+        long start = System.currentTimeMillis();
+
         for(BigInteger current = startN; !current.equals(endN); current = current.add(BigInteger.ONE)) {
             if(pd.factorize(current)) {
                 ArrayList<BigInteger> factors = (ArrayList<BigInteger>)pd.getFoundPrimes();
@@ -190,9 +192,13 @@ public class TestPrimeFactoring {
             }
         }
 
+        long elapsed = (System.currentTimeMillis() - start) / 1000;
+
         if(failed > 0) {
             System.err.println("Failed to factorize " + failed + " out of " + NUM_QS_TESTS + " numbers.");
         }
+
+        System.out.println("Factorized " + (NUM_QS_TESTS - failed) + " numbers in " + elapsed + " seconds.");
     }
 
 }
