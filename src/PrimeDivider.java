@@ -122,7 +122,7 @@ public class PrimeDivider {
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
 
-        ArrayList<Integer> smoothX = qs.preSieve(N);
+        ArrayList<Long> smoothX = qs.preSieve(N);
         if (smoothX == null) {
             return false;
         }

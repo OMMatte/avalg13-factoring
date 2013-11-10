@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
  * @author mathiaslindblom
  */
 public class TestPrimeFactoring {
-    final static int NUM_QS_TESTS = 100;
+    final static int NUM_QS_TESTS = 500;
 
     private PrimeDivider pd = new PrimeDivider();
 
@@ -138,7 +138,7 @@ public class TestPrimeFactoring {
 //        assertEquals(baseFactors.get(2).intValue(), 23);
 //        assertEquals(baseFactors.get(3).intValue(), 29);
 
-        ArrayList<Integer> smoothX = qs.preSieve(N);
+        ArrayList<Long> smoothX = qs.preSieve(N);
 //        assertEquals(smoothX.size(), baseFactors.size()+QuadraticSieve.SMOOTH_EXTRAS);
 
         byte[][] matrix = qs.buildMatrix(smoothX,N);
@@ -166,7 +166,7 @@ public class TestPrimeFactoring {
 
     @Test
     public void testFactorizeRange() {
-        BigInteger startN = BigInteger.valueOf(2).pow(90);
+        BigInteger startN = BigInteger.valueOf(2).pow(95);
         BigInteger endN = startN.add(BigInteger.valueOf(NUM_QS_TESTS));
         PrimeDivider pd = new PrimeDivider();
 
