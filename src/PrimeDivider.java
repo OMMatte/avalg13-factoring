@@ -26,8 +26,8 @@ public class PrimeDivider {
     public static final boolean TRY_POTENS_SEARCH_AFTER_ADD = true;
 
     //The amount of milliseconds the algorithm should spend on a single value.
-    public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_TIME_LIMIT = 2000;
+    public static final long POLLARD_RHO_TIME_LIMIT = 20000;
+    public static final long QS_TIME_LIMIT          = 2000;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 
@@ -93,10 +93,6 @@ public class PrimeDivider {
             return true;
         }
 
-        if (currentValue.bitLength() > MAXIMUM_BIT_LENGTH) {
-            return false;
-        }
-
         //Try to factorize whats left using pollard rho
         //        if (pollard(currentValue, System.currentTimeMillis() + POLLARD_RHO_TIME_LIMIT, totalAmountPotenses)) {
         //            return true;
@@ -108,16 +104,16 @@ public class PrimeDivider {
         }
 
         //Lastly try a desperate potens finder
-//        if (potensFinder()) {
-//            return true;
-//        }
+        //        if (potensFinder()) {
+        //            return true;
+        //        }
 
         return false;
     }
 
     //TODO: Maybe decrease actions limit when we do QS again.
     boolean quadraticSieve(BigInteger N, long actionsLimit) {
-//        potensFinder(N, 1);
+        //        potensFinder(N, 1);
 
         QuadraticSieve qs = new QuadraticSieve(N, actionsLimit);
 
@@ -138,6 +134,9 @@ public class PrimeDivider {
         if (result == null) {
             //We did not find a prime, return false.
             //TODO: try again?
+            if (pollard(N, System.currentTimeMillis() + POLLARD_RHO_TIME_LIMIT, totalAmountPotenses)) {
+                return true;
+            }
             return false;
         } else {
             boolean success = true;
@@ -146,7 +145,7 @@ public class PrimeDivider {
             } else {
                 success = quadraticSieve(result[0], actionsLimit);
             }
-            if(success){
+            if (success) {
                 if (result[1].isProbablePrime(IS_PRIME_CERTAINTY)) {
                     addPrime(result[1]);
                 } else {
@@ -293,7 +292,7 @@ public class PrimeDivider {
                     //Break, because currentValue has been changed, and we want to start over with n:th-root checking.
                     rootFound = true;
                     throw new RuntimeException();
-//                    break;
+                    //                    break;
                 }
             }
 
