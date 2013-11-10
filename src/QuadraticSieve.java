@@ -39,7 +39,7 @@ public class QuadraticSieve {
 
     public QuadraticSieve(BigInteger N, long timeLimit) {
         init(N);
-        SIEVE_SPAN = (int) Math.pow((float) (N.bitLength()) / 15f, 6);
+        SIEVE_SPAN = (int) Math.pow(N.bitLength() / 10, 5);
         this.timeLimit = System.currentTimeMillis() + timeLimit;
     }
 

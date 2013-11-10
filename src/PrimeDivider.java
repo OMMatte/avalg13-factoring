@@ -27,9 +27,9 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_TIME_LIMIT = 1000;
+    public static final long QS_TIME_LIMIT = 2000;
 
-    public static final int MAXIMUM_BIT_LENGTH = 99;
+    public static final int MAXIMUM_BIT_LENGTH = 100;
 
     //The current value to factorize. Will be changed to the remainding value to factorize each
     //time a prime factor have been found and added to foundPrimes list.
@@ -117,7 +117,7 @@ public class PrimeDivider {
 
     //TODO: Maybe decrease actions limit when we do QS again.
     boolean quadraticSieve(BigInteger N, long actionsLimit) {
-        potensFinder(N, 1);
+//        potensFinder(N, 1);
 
         QuadraticSieve qs = new QuadraticSieve(N, actionsLimit);
 
