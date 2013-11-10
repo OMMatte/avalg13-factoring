@@ -27,7 +27,7 @@ public class PrimeDivider {
 
     //The amount of milliseconds the algorithm should spend on a single value.
     public static final long POLLARD_RHO_TIME_LIMIT = 20;
-    public static final long QS_TIME_LIMIT          = 150*30;
+    public static final long QS_ACTIONS_LIMIT = 600;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 
@@ -103,7 +103,7 @@ public class PrimeDivider {
         //        }
 
         //Now try to factorize whats left using QS
-        if (quadraticSieve(currentValue, System.currentTimeMillis() + QS_TIME_LIMIT)) {
+        if (quadraticSieve(currentValue, QS_ACTIONS_LIMIT)) {
             return true;
         }
 
@@ -115,14 +115,14 @@ public class PrimeDivider {
         return false;
     }
 
-    boolean quadraticSieve(BigInteger N, long timeLimit) {
-        QuadraticSieve qs = new QuadraticSieve();
+    //TODO: Maybe decrease actions limit when we do QS again.
+    boolean quadraticSieve(BigInteger N, long actionsLimit) {
+        QuadraticSieve qs = new QuadraticSieve(N, actionsLimit);
 
-        qs.init(N);
         qs.calculateFactorBaseLimitB(N);
         qs.calculateFactoreBase(N);
 
-        ArrayList<Integer> smoothX = qs.sieve(N, timeLimit);
+        ArrayList<Integer> smoothX = qs.sieve(N);
         if (smoothX == null) {
             return false;
         }
@@ -131,7 +131,7 @@ public class PrimeDivider {
         boolean[] marked = new boolean[matrix.length];
         qs.gaussElimination(matrix, marked);
 
-        BigInteger[] result = qs.finalize(matrix, marked, N, smoothX, timeLimit);
+        BigInteger[] result = qs.finalize(matrix, marked, N, smoothX);
 
         if (result == null) {
             //We did not find a prime, return false.
@@ -142,13 +142,13 @@ public class PrimeDivider {
             if (result[0].isProbablePrime(IS_PRIME_CERTAINTY)) {
                 addPrime(result[0]);
             } else {
-                success = quadraticSieve(result[0], timeLimit);
+                success = quadraticSieve(result[0], actionsLimit);
             }
             if(success){
                 if (result[1].isProbablePrime(IS_PRIME_CERTAINTY)) {
                     addPrime(result[1]);
                 } else {
-                    success = quadraticSieve(result[1], timeLimit);
+                    success = quadraticSieve(result[1], actionsLimit);
                 }
             }
             return success;
