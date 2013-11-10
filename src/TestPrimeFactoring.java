@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
  * @author mathiaslindblom
  */
 public class TestPrimeFactoring {
-    final static int NUM_QS_TESTS = 500;
+    final static int NUM_QS_TESTS = 200;
 
     private PrimeDivider pd = new PrimeDivider();
 

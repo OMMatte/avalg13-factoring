@@ -326,30 +326,51 @@ public class QuadraticSieve {
                 sieveCurrentX[i] += prime;
                 int relativeX = (int) (x - offsetX);
 
-                if(qLogValues[relativeX] < Float.POSITIVE_INFINITY) {
+                if (qLogValues[relativeX] < Float.POSITIVE_INFINITY) {
                     qLogValues[relativeX] -= primeLogValues[i];
 
                     if (qLogValues[relativeX] < threshHold) {
                         BigInteger qValue = Q(BigInteger.valueOf(x), N);
-                        for (int col = 0; col < factorBasePrimes.size(); col++) {
-                            row[col] = 0;
-                            int p = factorBasePrimes.get(col);
-                            BigInteger BIGprime = BigInteger.valueOf(p);
-                            BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
-                            while (qr[1].equals(BigInteger.ZERO)) {
-                                qValue = qr[0];
-                                row[col] = (byte) (row[col] == 1 ? 0 : 1);
-                                qr = qValue.divideAndRemainder(BIGprime);
+
+                        if (qValue.bitLength() < 64) {
+                            long q = qValue.longValue();
+
+                            for (int col = 0; col < factorBasePrimes.size(); col++) {
+                                row[col] = 0;
+                                long p = factorBasePrimes.get(col);
+
+                                while (q % p == 0) {
+                                    q = q / p;
+                                    row[col] = (byte) (row[col] == 1 ? 0 : 1);
+                                }
+                                if (q == 1) {
+                                    matrix[smoothX.size()] = row;
+                                    row = new byte[row.length];
+                                    smoothX.add(x);
+                                    break;
+                                }
                             }
-                            if (qValue.equals(BigInteger.ONE)) {
-                                matrix[smoothX.size()] = row;
-                                row = new byte[row.length];
+                        } else {
+                            for (int col = 0; col < factorBasePrimes.size(); col++) {
+                                row[col] = 0;
+                                long p = factorBasePrimes.get(col);
 
-                                smoothX.add(x);
-
-                                break;
+                                BigInteger BIGprime = BigInteger.valueOf(p);
+                                BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
+                                while (qr[1].equals(BigInteger.ZERO)) {
+                                    qValue = qr[0];
+                                    row[col] = (byte) (row[col] == 1 ? 0 : 1);
+                                    qr = qValue.divideAndRemainder(BIGprime);
+                                }
+                                if (qValue.equals(BigInteger.ONE)) {
+                                    matrix[smoothX.size()] = row;
+                                    row = new byte[row.length];
+                                    smoothX.add(x);
+                                    break;
+                                }
                             }
                         }
+
 
                         if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
                             return true;
@@ -364,33 +385,33 @@ public class QuadraticSieve {
             }
         }
 
-//        for (long x : suspiciosSmoothX) {
-//
-//            int relativeX = (int) (x -offsetX);
-//            float qLogValue = qLogValues[relativeX];
-//            if (qLogValue < SMOOTH_ZERO) {
-//                smoothX.add(x);
-//                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
-//            } else if (qLogValue < threshHold) {
-//                BigInteger qValue = Q(BigInteger.valueOf(x), N);
-//                for (int prime : factorBasePrimes) {
-//                    BigInteger BIGprime = BigInteger.valueOf(prime);
-//                    BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
-//                    while (qr[1].equals(BigInteger.ZERO)) {
-//                        qValue = qr[0];
-//                        qr = qValue.divideAndRemainder(BIGprime);
-//                    }
-//                    if (qValue.equals(BigInteger.ONE)) {
-//                        smoothX.add(x);
-//                        break;
-//                    }
-//                }
-//                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
-//            }
-//        }
-//        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
-//            return true;
-//        }
+        //        for (long x : suspiciosSmoothX) {
+        //
+        //            int relativeX = (int) (x -offsetX);
+        //            float qLogValue = qLogValues[relativeX];
+        //            if (qLogValue < SMOOTH_ZERO) {
+        //                smoothX.add(x);
+        //                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
+        //            } else if (qLogValue < threshHold) {
+        //                BigInteger qValue = Q(BigInteger.valueOf(x), N);
+        //                for (int prime : factorBasePrimes) {
+        //                    BigInteger BIGprime = BigInteger.valueOf(prime);
+        //                    BigInteger[] qr = qValue.divideAndRemainder(BIGprime);
+        //                    while (qr[1].equals(BigInteger.ZERO)) {
+        //                        qValue = qr[0];
+        //                        qr = qValue.divideAndRemainder(BIGprime);
+        //                    }
+        //                    if (qValue.equals(BigInteger.ONE)) {
+        //                        smoothX.add(x);
+        //                        break;
+        //                    }
+        //                }
+        //                qLogValues[relativeX] = Float.POSITIVE_INFINITY;
+        //            }
+        //        }
+        //        if (smoothX.size() >= factorBasePrimes.size() + SMOOTH_EXTRAS) {
+        //            return true;
+        //        }
 
         if (System.currentTimeMillis() > timeLimit) {
             return false;
