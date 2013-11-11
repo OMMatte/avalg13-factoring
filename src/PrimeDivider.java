@@ -26,8 +26,8 @@ public class PrimeDivider {
     public static final boolean TRY_POTENS_SEARCH_AFTER_ADD = true;
 
     //The amount of milliseconds the algorithm should spend on a single value.
-    public static final long POLLARD_RHO_TIME_LIMIT = 20000;
-    public static final long QS_TIME_LIMIT          = 2000;
+    public static final long POLLARD_RHO_TIME_LIMIT = 200000000;
+    public static final long QS_TIME_LIMIT          = 200000000;
 
     public static final int MAXIMUM_BIT_LENGTH = 100;
 
@@ -82,6 +82,7 @@ public class PrimeDivider {
      */
     boolean factorize() {
         //If the value is 1 or probably a prime number, then factorization is not needed.
+        long start = System.currentTimeMillis();
         if (preFactorize()) {
             return true;
         }
@@ -100,6 +101,7 @@ public class PrimeDivider {
 
         //Now try to factorize whats left using QS
         if (quadraticSieve(currentValue, QS_TIME_LIMIT)) {
+            System.out.println(System.currentTimeMillis()-start);
             return true;
         }
 
