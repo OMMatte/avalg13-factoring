@@ -533,6 +533,7 @@ public class QuadraticSieve {
             }
         }
 
+
         return null;
     }
 
